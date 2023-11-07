@@ -33,6 +33,18 @@ def get_post_details(post_id):
         post_votes = submission.score
         post_text = submission.selftext
 
+        # Get comments for the post
+        comments = []
+        for comment in submission.comments:
+            comment_data = {
+                'comment_id': comment.id,
+                'user_who_posted': comment.author.name if comment.author else None,
+                'timestamp_commented': comment.created_utc,
+                'votes': comment.score,
+                'text': comment.body
+            }
+            comments.append(comment_data)
+
         post_details = {
             'url': post_url,
             'user_who_posted_this': post_author.name,
@@ -40,7 +52,8 @@ def get_post_details(post_id):
             'when_it_was_posted_timestamp': post_timestamp,
             'header': post_header,
             'votes': post_votes,
-            'text': post_text
+            'text': post_text,
+            'comments': comments
         }
 
         return post_details

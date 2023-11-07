@@ -1,0 +1,53 @@
+import requests
+from bs4 import BeautifulSoup
+import json
+import time
+from random import randint
+
+# Base URL and initial offset
+base_url = "https://www.sciencedirect.com/search?qs=pain%20management&show=100&offset="
+offset = 0
+max_offset = 1000  # Maximum offset to stop scraping
+
+all_urls = []
+
+# Define headers to simulate a real browser request
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+}
+
+while offset <= max_offset:
+    url = f"{base_url}{offset}"
+
+    # Send an HTTP GET request with headers to the ScienceDirect search page
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        # Parse the HTML content of the page
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        # Find all the <li> elements with class "ResultItem"
+        result_items = soup.find_all("li", class_="ResultItem")
+
+        for item in result_items:
+            # Extract the URL from the "href" attribute of the <a> tag
+            article_url = item.find("a", class_="anchor-default")["href"]
+            full_article_url = f"https://www.sciencedirect.com{article_url}"
+
+            all_urls.append(full_article_url)
+
+        offset += 100  # Increase the offset for the next page
+
+        # Introduce a random delay to avoid triggering rate limits
+        time.sleep(randint(3, 7))
+    else:
+        print(f"Failed to fetch data from {url}. Status code: {response.status_code}")
+        break
+
+# Save the collected URLs to a JSON file
+output_path = r"C:\Users\HP\Desktop\CARD\sciencedirect\urls.json"
+
+with open(output_path, "w") as outfile:
+    json.dump(all_urls, outfile)
+
+print(f"Scraped {len(all_urls)} URLs and saved to {output_path}")

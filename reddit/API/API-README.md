@@ -9,8 +9,8 @@ Returns a list of ids regarding a specified number of the latest submissions.
 Returns a list of ids regarding comments to a particular submission.
 
 ### parse_submission
-Parses useful data regarding submission:
-$~~~$url
+Parses useful data regarding submission:<br>
+$~~~$url<br>
 $~~~$user
 $~~~$details_about_user:
 $~~~~~~$username

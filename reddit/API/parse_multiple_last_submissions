@@ -1,0 +1,108 @@
+import praw
+import passwords
+import json
+import os
+
+# Replace these with your own API keys and user information
+client_id = passwords.client_id
+client_secret = passwords.client_secret
+user_agent = passwords.user_agent
+username = passwords.username
+password = passwords.password
+
+# Initialize the Reddit API client
+reddit = praw.Reddit(
+    client_id=client_id,
+    client_secret=client_secret,
+    user_agent=user_agent,
+    username=username,
+    password=password
+)
+
+def is_valid_comment(comment):
+    return isinstance(comment, praw.models.Comment) or isinstance(comment, praw.models.MoreComments)
+
+def parse_comment(comment):
+    if is_valid_comment(comment):
+        comment_data = {
+            'comment_id': comment.id,
+            'user_who_posted': comment.author.name if comment.author else None,
+            'timestamp_commented': comment.created_utc,
+            'votes': comment.score,
+            'text': comment.body,
+            'replies': []
+        }
+        if isinstance(comment, praw.models.Comment):
+            for reply in comment.replies:
+                reply_data = parse_comment(reply)
+                if reply_data:
+                    comment_data['replies'].append(reply_data)
+        return comment_data
+    else:
+        return None
+
+def get_post_details(post_id):
+    try:
+        submission = reddit.submission(id=post_id)
+        post_url = submission.url
+        post_author = submission.author
+        post_author_details = {
+            'username': post_author.name,
+            'karma': post_author.link_karma,
+            'created_at': post_author.created_utc
+        }
+        post_timestamp = submission.created_utc
+        post_header = submission.title
+        post_votes = submission.score
+        post_text = submission.selftext
+
+        submission.comments.replace_more()
+        comments = []
+        for comment in submission.comments.list():
+            comment_data = parse_comment(comment)
+            if comment_data:
+                comments.append(comment_data)
+
+        post_details = {
+            'url': post_url,
+            'user_who_posted_this': post_author.name,
+            'details_about_the_user_who_posted_this': post_author_details,
+            'when_it_was_posted_timestamp': post_timestamp,
+            'header': post_header,
+            'votes': post_votes,
+            'text': post_text,
+            'comments': comments
+        }
+
+        return post_details
+
+    except praw.exceptions.RedditAPIException as e:
+        print(f"An error occurred: {e}")
+        return None
+
+def save_submission_data(submission_id, data, folder_path):
+    file_path = os.path.join(folder_path, submission_id + '.json')
+    with open(file_path, 'w', encoding='utf-8') as file:
+        json.dump(data, file, indent=4)
+
+# Specify the subreddit you want to scrape
+subreddit_name = "AskDocs"
+
+# Limit the number of posts to retrieve (up to 10)
+post_limit = 10
+
+# Create a folder to store the results
+folder_path = "C:\\Users\\HP\\Desktop\\redditscrape\\scraping-submissions"
+
+# Ensure the folder exists or create it
+if not os.path.exists(folder_path):
+    os.makedirs(folder_path)
+
+# Retrieve the latest posts from the subreddit and save them
+subreddit = reddit.subreddit(subreddit_name)
+for submission in subreddit.new(limit=post_limit):
+    submission_id = submission.id
+    post_details = get_post_details(submission_id)
+    if post_details:
+        save_submission_data(submission_id, post_details, folder_path)
+        print(f'Saved data for submission ID: {submission_id}')

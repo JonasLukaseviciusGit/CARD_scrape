@@ -22,12 +22,12 @@ Parses useful data regarding submission:<br>
 
 Also comments and comments to those comments (and so on):<br>
 
-comment_id<br>
-user<br>
-commented_at<br>
-votes<br>
-text<br>
-replies<br>
+* comment_id
+* user
+* commented_at
+* votes
+* text
+* replies
 
 ### parse_multiple_last_submissions
 Uses process similar to parse_submission. Does the following:

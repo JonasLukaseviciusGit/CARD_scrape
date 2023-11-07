@@ -1,0 +1,49 @@
+import pickle
+
+# Specify the file path
+path_submissions = r"C:\Users\HP\Desktop\redditscrape\submissions-list.pickle"
+path_comments = r"C:\Users\HP\Desktop\redditscrape\comments-list.pickle"
+
+# Load submission list
+try:
+    with open(path_submissions, 'rb') as file:
+        l_submissions = pickle.load(file)
+except Exception as e:
+    print(e)
+
+# Load comment list
+try:
+    with open(path_comments, 'rb') as file:
+        l_comments = pickle.load(file)
+except Exception as e:
+    print(e)
+
+pairing = []
+
+a = 0
+for submission in l_submissions:
+    _id = submission[2]
+    _list = [_id, None, None, None]
+    for comment in l_comments:
+        index = [comment[0], comment[1]]
+        c_id = comment[2]
+        link_id = comment[3]
+        parent_id = comment[4]
+        if _id == c_id:
+            _list[1] = index
+        elif _id == link_id:
+            _list[2] = index
+        elif _id == parent_id:
+            _list[3] = index
+    pairing.append(_list)
+    print(f'submission: {a}')
+    a += 1
+    if a == 10:
+        break
+
+path_pairing = r"C:\Users\HP\Desktop\redditscrape\pairing-list.pickle"
+# Saving the list to a file using pickle
+with open(path_pairing, 'wb') as file:
+    pickle.dump(pairing, file)
+
+print('Done!')

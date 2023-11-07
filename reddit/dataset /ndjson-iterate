@@ -1,0 +1,12 @@
+import json
+
+# Specify the path to your NDJSON file
+file_path = r"C:\Users\HP\Desktop\redditscrape\AskDocs_submissions.ndjson"
+
+# Open the NDJSON file and iterate through it line by line
+with open(file_path, 'r') as ndjson_file:
+    for line in ndjson_file:
+        # Parse each line as a JSON object
+        data = json.loads(line)
+        # Print the JSON data
+        print(data)

@@ -1,62 +1,32 @@
 import requests
 from bs4 import BeautifulSoup
 
-# Define the URL
+# Define the URL of the webpage
 url = "https://www.cambridge.org/core/search?q=pain%20management&pageNum=1"
 
-# Send a GET request to the URL
+# Send an HTTP GET request to the URL
 response = requests.get(url)
 
-# Check if the request was successful (status code 200)
+# Check if the request was successful
 if response.status_code == 200:
-    # Get the HTML content from the response
-    html_content = response.text
+    # Parse the HTML content of the page using BeautifulSoup
+    soup = BeautifulSoup(response.text, "html.parser")
 
-    # Parse the HTML content using BeautifulSoup
-    soup = BeautifulSoup(html_content, 'html.parser')
+    # Find all elements with the specified class
+    elements = soup.find_all("div", class_="representation overview search")
 
-    # Find all elements with the class "representation overview search"
-    elements = soup.find_all('div', class_='representation overview search')
-
-    # Create a list to store dictionaries for each element
-    result_list = []
-
-    # Iterate through each element
+    # Loop through the elements and extract the header, authors, and book
     for element in elements:
-        data = {}
-        data['Headline'] = element.find('li', class_='title').text.strip()
+        header = element.find("h3").text
+        authors = element.find("li", class_="author").find_all("a", class_="more-by-this-author")
+        author_names = [author.text for author in authors]
+        authors_string = "By " + " ".join(author_names)
+        book_element = element.find("dd", class_="do-not-mathjax")
+        book = book_element.find("a", class_="url productParent do-not-mathjax").text.strip() if book_element else ""
+        print("Header:", header)
+        print("Authors:", authors_string)
+        print("Book:", book)
+        print()
 
-        creators = element.find_all('li', class_='author')
-        creators_text = [creator.get_text() for creator in creators]
-        data['Creators'] = ' '.join(creators_text)
-
-        try:
-            book_element = element.find('dt', class_='source').find('a')
-            data['Book'] = book_element.text.strip()
-        except AttributeError:
-            data['Book'] = "N/A"
-
-        try:
-            published_online_element = element.find('dt', class_='published').find('span', class_='date')
-            data['Published online'] = published_online_element.text.strip()
-        except AttributeError:
-            data['Published online'] = "N/A"
-
-        try:
-            print_pub_element = element.find('dt', class_='published').find_next_sibling('dd')
-            data['Print publication'] = print_pub_element.text.strip()
-        except AttributeError:
-            data['Print publication'] = "N/A"
-
-        # Extract the summary
-        summary = element.find('div', class_='abstract')
-        data['Summary'] = summary.get_text().strip() if summary else "N/A"
-
-        # Append the data to the result list
-        result_list.append(data)
-
-    # Print the result_list
-    for item in result_list:
-        print(item)
 else:
-    print("Failed to retrieve the HTML content. Status code:", response.status_code)
+    print("Failed to retrieve the webpage. Status code:", response.status_code)

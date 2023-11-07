@@ -1,0 +1,35 @@
+import praw
+import passwords
+import json
+
+# Replace these with your own API keys
+client_id = passwords.client_id
+client_secret = passwords.client_secret
+user_agent = passwords.user_agent
+username = passwords.username
+password = passwords.password
+
+# Initialize the Reddit API client
+reddit = praw.Reddit(
+    client_id=passwords.client_id,
+    client_secret=passwords.client_secret,
+    user_agent=passwords.user_agent,
+    username=passwords.username,
+    password=passwords.password
+)
+
+# Replace 'submission_id' with the ID of the submission you're interested in
+submission_id = '17q28ek'
+
+# Get the submission object
+submission = reddit.submission(id=submission_id)
+
+# Initialize an empty list to store comment IDs
+comment_ids = []
+
+# Iterate through the comments and append their IDs to the list
+for comment in submission.comments.list():
+    comment_ids.append(comment.id)
+
+# Now 'comment_ids' contains a list of all comment IDs for the submission
+print(comment_ids)

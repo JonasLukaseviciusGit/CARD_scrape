@@ -1,0 +1,11 @@
+import json
+
+# Define the file path
+file_path = r'C:\Users\HP\Desktop\redditscrape\submissions\001.json'
+
+# Load the JSON data from the file
+with open(file_path, 'r', encoding='utf-8') as json_file:
+    data = json.load(json_file)[5]
+
+# Print the contents of the JSON file
+print(json.dumps(data, indent=4))  # This will pretty-print the JSON data

@@ -11,8 +11,8 @@ Returns a list of ids regarding comments to a particular submission.
 ### parse_submission
 Parses useful data regarding submission:<br>
 
-*url<br>
-*user<br>
+**url<br>
+**user<br>
 *user_details: username, karma, created_at<br>
 *posted_at<br>
 *header<br>

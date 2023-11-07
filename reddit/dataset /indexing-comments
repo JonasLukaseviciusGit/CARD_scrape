@@ -1,0 +1,32 @@
+import json
+import pickle
+
+total_list = []
+num = 1
+while num < 337:
+    if num < 10:
+        num_s = f"00{num}"
+    elif num < 100:
+        num_s = f"0{num}"
+    else:
+        num_s = f"{num}"
+    file_path = fr"C:\Users\HP\Desktop\redditscrape\comments\{num_s}.json"
+    with open(file_path, 'r', encoding='utf-8') as json_file:
+        data = json.load(json_file)
+    a = 0
+    for element in data:
+        file = num_s
+        index = a
+        _id = element['id']
+        link_id = element['link_id']
+        parent_id = element['parent_id']
+        sublist = [file, index, _id, link_id, parent_id]
+        total_list.append(sublist)
+        a += 1
+    print(num)
+    num += 1
+
+list_path = r"C:\Users\HP\Desktop\redditscrape\comments-list-1.pickle"
+with open(list_path, 'wb') as f:
+    pickle.dump(total_list, f)
+print("Done")

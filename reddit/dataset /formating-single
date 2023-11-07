@@ -1,0 +1,66 @@
+"""
+What this script does:
+Creates a folder 'C:\Users\HP\Desktop\redditscrape\submissions\posts'.
+
+Then it iterates through every dictionary in json file and for every dictionary does the following:
+
+1. Creates a dictionary containing every key and value as it is, only without "selftext".
+2. Applies the meaningful_print function for "selftext" value, with that value being passed as data:
+3. Creates .txt file for that text content generated in step 2.
+4. Adds that path to the dictionary by key "path".
+5. Repeats this cycle for every dictionary in the json file.
+"""
+
+import json
+import os
+import html
+from bs4 import BeautifulSoup
+
+# Define the input JSON file path
+input_file_path = r'C:\Users\HP\Desktop\redditscrape\submissions\001.json'
+
+# Create the 'posts' folder if it doesn't exist
+output_folder = r'C:\Users\HP\Desktop\redditscrape\submissions\posts'
+os.makedirs(output_folder, exist_ok=True)
+
+# Function to extract meaningful text from "selftext" value
+def meaningful_print(data):
+    if "selftext" in data:
+        # Decode the HTML-encoded entities in the 'selftext' value
+        decoded_html = html.unescape(data["selftext"])
+
+        # Parse the HTML using BeautifulSoup
+        soup = BeautifulSoup(decoded_html, 'html.parser')
+
+        # Extract meaningful text while preserving formatting
+        meaningful_text = soup.get_text()
+
+        # Return the meaningful text
+        return meaningful_text
+    else:
+        return None
+
+# Load the JSON data from the file
+with open(input_file_path, 'r', encoding='utf-8') as json_file:
+    json_data = json.load(json_file)
+
+# Iterate through each dictionary in the JSON data
+for index, data_dict in enumerate(json_data):
+    # Step 1: Create a dictionary without "selftext"
+    filtered_dict = {k: v for k, v in data_dict.items() if k != "selftext"}
+
+    # Step 2: Apply the meaningful_print function to "selftext" value
+    meaningful_text = meaningful_print(data_dict)
+
+    # Step 3: Create a .txt file for the text content and save it
+    if meaningful_text:
+        output_path = os.path.join(output_folder, f"{index+1:03}.txt")
+        with open(output_path, 'w', encoding='utf-8') as text_file:
+            text_file.write(meaningful_text)
+
+    # Step 4: Add the path to the dictionary by key "path"
+    if meaningful_text:
+        filtered_dict["path"] = output_path
+
+    # Step 5: Do something with the filtered_dict (print it or save it as needed)
+    print(filtered_dict)

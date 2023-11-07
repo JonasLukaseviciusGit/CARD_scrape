@@ -18,6 +18,20 @@ reddit = praw.Reddit(
     password=password
 )
 
+def parse_comment(comment):
+    comment_data = {
+        'comment_id': comment.id,
+        'user_who_posted': comment.author.name if comment.author else None,
+        'timestamp_commented': comment.created_utc,
+        'votes': comment.score,
+        'text': comment.body,
+        'replies': []
+    }
+    for reply in comment.replies:
+        if isinstance(reply, praw.models.Comment):
+            comment_data['replies'].append(parse_comment(reply))
+    return comment_data
+
 def get_post_details(post_id):
     try:
         submission = reddit.submission(id=post_id)
@@ -36,14 +50,8 @@ def get_post_details(post_id):
         # Get comments for the post
         comments = []
         for comment in submission.comments:
-            comment_data = {
-                'comment_id': comment.id,
-                'user_who_posted': comment.author.name if comment.author else None,
-                'timestamp_commented': comment.created_utc,
-                'votes': comment.score,
-                'text': comment.body
-            }
-            comments.append(comment_data)
+            if isinstance(comment, praw.models.Comment):
+                comments.append(parse_comment(comment))
 
         post_details = {
             'url': post_url,
@@ -62,7 +70,7 @@ def get_post_details(post_id):
         print(f"An error occurred: {e}")
         return None
 
-post_id = '17q28ek'  # Replace with the desired post ID
+post_id = '17pjl8h'  # Replace with the desired post ID
 post_details = get_post_details(post_id)
 
 if post_details:

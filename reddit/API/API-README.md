@@ -9,20 +9,20 @@ Returns a list of ids regarding a specified number of the latest submissions.
 Returns a list of ids regarding comments to a particular submission.
 
 ### parse_submission
-Parses useful data regarding submission:
+Parses useful data regarding submission:<br>
 
-url
-user
-details_about_user: username, karma, user_created_at
-posted_at
-header
-votes
-text
+url<br>
+user<br>
+details_about_user: username, karma, user_created_at<br>
+posted_at<br>
+header<br>
+votes<br>
+text<br>
 
-Also comments and comments to those comments (and so on):
-comment_id
-user
-commented_at
-votes
-text
-replies
+Also comments and comments to those comments (and so on):<br>
+comment_id<br>
+user<br>
+commented_at<br>
+votes<br>
+text<br>
+replies<br>

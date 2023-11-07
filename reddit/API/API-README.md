@@ -13,11 +13,12 @@ Parses useful data regarding submission:<br>
 
 url<br>
 user<br>
-details_about_user: username, karma, user_created_at<br>
+user_details: username, karma, created_at<br>
 posted_at<br>
 header<br>
 votes<br>
 text<br>
+comments<br>
 
 Also comments and comments to those comments (and so on):<br>
 
@@ -27,3 +28,9 @@ commented_at<br>
 votes<br>
 text<br>
 replies<br>
+
+### parse_multiple_last_submissions
+Uses process similar to parse_submission. Does the following:
+1. Gets the last 10 submission ids (this number can be changed).
+2. Creates a folder.
+3. Parses every id and saves resulting dictionary in the folder naming it according to its id.

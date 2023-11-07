@@ -1,0 +1,25 @@
+import requests
+from bs4 import BeautifulSoup
+import re
+
+# Define the URL you want to scrape
+url = 'https://www.quora.com/search?q=did%20nazis%20escape%20to%20Argentina'
+
+# Set the user-agent header to mimic a web browser
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+}
+
+# Send an HTTP GET request with headers
+response = requests.get(url, headers=headers).text
+print(response)
+
+# Define a regular expression pattern to match URLs starting with "https://www.quora.com/" and ending with a non-alphabetic symbol.
+pattern = r'https://www\.quora\.com/[a-zA-Z0-9_-]+(?=[^a-zA-Z0-9_-]|$)'
+
+# Use re.findall to extract all matching URLs from the HTML content.
+matches = re.findall(pattern, response)
+
+# Print the matched URLs.
+for url in matches:
+    print(url)

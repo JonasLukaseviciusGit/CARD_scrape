@@ -18,19 +18,28 @@ reddit = praw.Reddit(
     password=password
 )
 
+def is_valid_comment(comment):
+    # Check if the comment is valid for parsing
+    return isinstance(comment, praw.models.Comment) or isinstance(comment, praw.models.MoreComments)
+
 def parse_comment(comment):
-    comment_data = {
-        'comment_id': comment.id,
-        'user_who_posted': comment.author.name if comment.author else None,
-        'timestamp_commented': comment.created_utc,
-        'votes': comment.score,
-        'text': comment.body,
-        'replies': []
-    }
-    for reply in comment.replies:
-        if isinstance(reply, praw.models.Comment):
-            comment_data['replies'].append(parse_comment(reply))
-    return comment_data
+    if is_valid_comment(comment):
+        comment_data = {
+            'comment_id': comment.id,
+            'user_who_posted': comment.author.name if comment.author else None,
+            'timestamp_commented': comment.created_utc,
+            'votes': comment.score,
+            'text': comment.body,
+            'replies': []
+        }
+        if isinstance(comment, praw.models.Comment):
+            for reply in comment.replies:
+                reply_data = parse_comment(reply)
+                if reply_data:
+                    comment_data['replies'].append(reply_data)
+        return comment_data
+    else:
+        return None
 
 def get_post_details(post_id):
     try:
@@ -47,11 +56,13 @@ def get_post_details(post_id):
         post_votes = submission.score
         post_text = submission.selftext
 
-        # Get comments for the post
+        # Get comments for the post, including MoreComments
+        submission.comments.replace_more()
         comments = []
-        for comment in submission.comments:
-            if isinstance(comment, praw.models.Comment):
-                comments.append(parse_comment(comment))
+        for comment in submission.comments.list():
+            comment_data = parse_comment(comment)
+            if comment_data:
+                comments.append(comment_data)
 
         post_details = {
             'url': post_url,

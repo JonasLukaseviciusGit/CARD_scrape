@@ -1,0 +1,33 @@
+from Bio import Entrez
+import json
+
+# Your email address (required by NCBI)
+Entrez.email = "someemail"  # Replace with your email
+
+# Define the search term
+search_term = "pain management"
+max_results = 100
+
+# Perform the PubMed search and retrieve the results
+handle = Entrez.esearch(db="pubmed", term=search_term, retmax=max_results)
+record = Entrez.read(handle)
+handle.close()
+
+# Get a list of PubMed IDs for the search results
+pubmed_ids = record["IdList"]
+
+# Initialize an empty list to store the articles
+articles = []
+
+# Retrieve the articles based on the PubMed IDs
+for pmid in pubmed_ids:
+    handle = Entrez.efetch(db="pubmed", id=pmid, rettype="xml")
+    record = Entrez.read(handle)
+    articles.append(record)
+
+# Save the list of articles to a JSON file
+output_path = r"C:\Users\HP\Desktop\CARD\pubmed\articles.json"
+with open(output_path, "w") as json_file:
+    json.dump(articles, json_file, indent=2)
+
+print(f"Retrieved and saved {len(articles)} articles to {output_path}")

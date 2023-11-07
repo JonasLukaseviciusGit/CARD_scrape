@@ -1,0 +1,45 @@
+import json
+import os
+
+# Input NDJSON file and output directory
+input_ndjson_file = r'C:\Users\HP\Desktop\redditscrape\AskDocs_submissions.ndjson'
+output_directory = r'C:\Users\HP\Desktop\redditscrape\submissions'
+
+# Create the output directory if it doesn't exist
+os.makedirs(output_directory, exist_ok=True)
+
+# Initialize counters
+file_counter = 1
+element_counter = 0
+
+# Open the input NDJSON file with the appropriate encoding
+with open(input_ndjson_file, 'r', encoding='utf-8') as ndjson_file:
+    current_json_data = []
+
+    for line in ndjson_file:
+        # Parse each line as a JSON object
+        data = json.loads(line)
+        current_json_data.append(data)
+        element_counter += 1
+
+        # Check if we've reached 10000 elements
+        if element_counter == 10000:
+            # Generate the output file path
+            output_file_path = os.path.join(output_directory, f'{file_counter:03d}.json')
+
+            # Write the current JSON data to the output file
+            with open(output_file_path, 'w', encoding='utf-8') as output_file:
+                json.dump(current_json_data, output_file)
+
+            # Reset counters and prepare for the next batch of 1000 elements
+            current_json_data = []
+            element_counter = 0
+            file_counter += 1
+
+    # If there are remaining elements, write them to the last file
+    if current_json_data:
+        output_file_path = os.path.join(output_directory, f'{file_counter:03d}.json')
+        with open(output_file_path, 'w', encoding='utf-8') as output_file:
+            json.dump(current_json_data, output_file)
+
+print("Splitting complete.")

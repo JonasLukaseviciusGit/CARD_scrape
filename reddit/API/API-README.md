@@ -20,6 +20,7 @@ votes<br>
 text<br>
 
 Also comments and comments to those comments (and so on):<br>
+
 comment_id<br>
 user<br>
 commented_at<br>

@@ -1,0 +1,56 @@
+import praw
+import passwords
+import json
+
+# Replace these with your own API keys and user information
+client_id = passwords.client_id
+client_secret = passwords.client_secret
+user_agent = passwords.user_agent
+username = passwords.username
+password = passwords.password
+
+# Initialize the Reddit API client
+reddit = praw.Reddit(
+    client_id=client_id,
+    client_secret=client_secret,
+    user_agent=user_agent,
+    username=username,
+    password=password
+)
+
+def get_post_details(post_id):
+    try:
+        submission = reddit.submission(id=post_id)
+        post_url = submission.url
+        post_author = submission.author
+        post_author_details = {
+            'username': post_author.name,
+            'karma': post_author.link_karma,
+            'created_at': post_author.created_utc
+        }
+        post_timestamp = submission.created_utc
+        post_header = submission.title
+        post_votes = submission.score
+        post_text = submission.selftext
+
+        post_details = {
+            'url': post_url,
+            'user_who_posted_this': post_author.name,
+            'details_about_the_user_who_posted_this': post_author_details,
+            'when_it_was_posted_timestamp': post_timestamp,
+            'header': post_header,
+            'votes': post_votes,
+            'text': post_text
+        }
+
+        return post_details
+
+    except praw.exceptions.RedditAPIException as e:
+        print(f"An error occurred: {e}")
+        return None
+
+post_id = '17q28ek'  # Replace with the desired post ID
+post_details = get_post_details(post_id)
+
+if post_details:
+    print(json.dumps(post_details, indent=4))

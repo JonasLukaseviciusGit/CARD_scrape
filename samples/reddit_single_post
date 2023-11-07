@@ -1,0 +1,49 @@
+from bs4 import BeautifulSoup
+import re
+
+path1 = r"C:\Users\HP\Desktop\CARD\reddit posts\18 yo.txt"
+path2 = r"C:\Users\HP\Desktop\CARD\reddit posts\leukaemia.txt"
+path3 = r"C:\Users\HP\Desktop\CARD\reddit posts\narrow_eustachian_tubes.txt"
+
+# Specify the path to the HTML file
+file_path = path3
+
+# Open and read the HTML file
+with open(file_path, 'r', encoding='utf-8') as file:
+    html = file.read()
+
+soup = BeautifulSoup(html, 'html.parser')
+
+
+def extract_elements(html_txt):
+    # Define the regular expression pattern to match the desired elements
+    pattern = r't3_[0-9a-zA-Z]+-post-rtjson-content'
+
+    # Use re.findall to find all matching elements in the input text
+    elements = re.findall(pattern, html_txt)
+
+    return elements
+
+# Extract author
+author = soup.select_one('span[slot="authorName"] a').text
+
+# Extract headline
+headline = soup.select_one('div[slot="title"]').text
+
+# Extract how long ago it was posted
+posted_time = soup.select_one('time[datetime]')['datetime']
+
+# Extract text using the custom function
+text_id = extract_elements(html)
+text_id = f'div[id="{text_id[0]}"]'  # Use the first element of the list
+text = soup.select_one(text_id).text if text_id else None
+
+# Extract link
+link = soup.select_one('a[slot="full-post-link"]')['href']
+
+# Print the extracted information
+print("Author:", author)
+print("Headline:", headline)
+print("Posted Time:", posted_time)
+print("Text:", text)
+print("Link:", link)

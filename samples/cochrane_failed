@@ -1,0 +1,35 @@
+import requests
+from bs4 import BeautifulSoup
+import json
+
+# Define the URL of the webpage
+url = "https://www.cochranelibrary.com/search?p_p_id=scolarissearchresultsportlet_WAR_scolarissearchresults&p_p_lifecycle=0&_scolarissearchresultsportlet_WAR_scolarissearchresults_searchType=basic&_scolarissearchresultsportlet_WAR_scolarissearchresults_searchBy=1&_scolarissearchresultsportlet_WAR_scolarissearchresults_searchText=pain+management"
+
+# Set up the request headers with your API key
+headers = {
+    "api-key": "YOUR_API_KEY"  # Replace with your Cochrane API key
+}
+
+try:
+    # Send a GET request to the webpage
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        # Parse the HTML content of the webpage
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        # Find all elements with class "search-results-item"
+        elements = soup.find_all("div", class_="search-results-item")
+
+        # Extract the URLs from the elements
+        urls = [element.find("a")["href"] for element in elements]
+
+        # Save the list of URLs to a JSON file
+        with open("C:\\Users\\HP\\Desktop\\CARD\\cochrane\\urls.json", "w") as json_file:
+            json.dump(urls, json_file, indent=4)
+
+        print(f"Successfully saved {len(urls)} URLs to 'urls.json'")
+    else:
+        print(f"Error: Failed to fetch data from the webpage. Status code: {response.status_code}")
+except Exception as e:
+    print(f"Error: {str(e)}")

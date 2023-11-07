@@ -26,8 +26,8 @@ def parse_comment(comment):
     if is_valid_comment(comment):
         comment_data = {
             'comment_id': comment.id,
-            'user_who_posted': comment.author.name if comment.author else None,
-            'timestamp_commented': comment.created_utc,
+            'user': comment.author.name if comment.author else None,
+            'commented_at': comment.created_utc,
             'votes': comment.score,
             'text': comment.body,
             'replies': []
@@ -65,9 +65,9 @@ def get_post_details(post_id):
 
         post_details = {
             'url': post_url,
-            'user_who_posted_this': post_author.name,
-            'details_about_the_user_who_posted_this': post_author_details,
-            'when_it_was_posted_timestamp': post_timestamp,
+            'user': post_author.name,
+            'user_details': post_author_details,
+            'posted_at': post_timestamp,
             'header': post_header,
             'votes': post_votes,
             'text': post_text,

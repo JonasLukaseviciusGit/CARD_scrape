@@ -1,0 +1,44 @@
+import json
+
+file_path = r'C:\Users\HP\Desktop\CARD\google_scholar\urls.json'
+
+
+def modify_urls(json_data):
+    modified_urls = []
+
+    for url in json_data:
+        # Remove 'https://' and everything after the next '/'
+        modified_url = url.split('https://')[1].split('/')[0]
+        modified_urls.append(modified_url)
+
+    return modified_urls
+
+
+def rank_and_count(modified_urls):
+    url_count = {}
+
+    for url in modified_urls:
+        if url in url_count:
+            url_count[url] += 1
+        else:
+            url_count[url] = 1
+
+    ranked_urls = sorted(url_count.items(), key=lambda x: x[1], reverse=True)
+
+    return ranked_urls
+
+
+try:
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+except FileNotFoundError:
+    print(f"File not found at path: {file_path}")
+except json.JSONDecodeError:
+    print(f"Error decoding JSON file at path: {file_path}")
+except Exception as e:
+    print(f"An error occurred: {e}")
+
+modified_urls = modify_urls(data)
+ranked_urls = rank_and_count(modified_urls)
+
+print(ranked_urls)

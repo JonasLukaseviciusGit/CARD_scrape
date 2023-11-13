@@ -1,0 +1,65 @@
+import requests
+from bs4 import BeautifulSoup
+import json
+import time
+from fake_useragent import UserAgent
+
+def get_random_user_agent():
+    ua = UserAgent()
+    return ua.random
+
+def get_google_scholar_urls(query, num_pages=10):
+    urls = []
+
+    for page in range(num_pages):
+        start = page * 10
+        url = f"https://scholar.google.com/scholar?q={query.replace(' ', '+')}&start={start}"
+
+        headers = {
+            'User-Agent': get_random_user_agent(),
+        }
+
+        response = requests.get(url, headers=headers)
+
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            results = soup.find_all('h3', class_='gs_rt')
+
+            for result in results:
+                link = result.find('a')
+                if link:
+                    urls.append(link['href'])
+
+            # Save URLs after processing each page
+            save_urls_to_json(urls, page + 1)  # Page numbers start from 1
+
+        elif response.status_code == 429:
+            print(response.text)
+            print("Rate limit exceeded. Waiting for 5 seconds...")
+            time.sleep(5)  # Wait for 5 seconds before making the next request
+
+        else:
+            print(f"Error {response.status_code}: {response.text}")
+
+        # Add a delay between requests
+        time.sleep(5)  # Add a delay of 5 seconds between requests
+
+    return urls
+
+# Rest of the code remains the same
+
+
+
+def save_urls_to_json(urls, page_number):
+    file_path = r'C:\Users\HP\Desktop\CARD\google_scholar\urls.json'
+    with open(file_path, 'a') as json_file:
+        json.dump({'page': page_number, 'urls': urls}, json_file)
+        json_file.write('\n')  # Add a newline after each set of URLs for different pages
+
+
+# Example usage
+query = "pain management"
+num_pages = 100
+result_urls = get_google_scholar_urls(query, num_pages)
+
+print(f"Saved {len(result_urls)} Google Scholar URLs.")

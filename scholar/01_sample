@@ -1,1 +1,32 @@
+import requests
+from bs4 import BeautifulSoup
+import json
 
+def get_google_scholar_urls(query, num_pages=10):
+    urls = []
+
+    for page in range(num_pages):
+        start = page * 10
+        url = f"https://scholar.google.com/scholar?q={query.replace(' ', '+')}&start={start}"
+
+        response = requests.get(url)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            results = soup.find_all('h3', class_='gs_rt')
+
+            for result in results:
+                link = result.find('a')
+                if link:
+                    urls.append(link['href'])
+
+    return urls
+
+query = "pain management"
+num_pages = 10
+result_urls = get_google_scholar_urls(query, num_pages)
+
+file_path = r'C:\Users\HP\Desktop\CARD\google_scholar\urls.json'
+with open(file_path, 'w') as json_file:
+    json.dump(result_urls, json_file)
+
+print(f"Saved {len(result_urls)} Google Scholar URLs to {file_path}")

@@ -1,1 +1,24 @@
+import pickle
+from tqdm import tqdm
 
+# Specify the file path
+path_submissions = r"C:\Users\HP\Desktop\redditscrape\submissions-list.pickle"
+
+# Load submission list
+try:
+    with open(path_submissions, 'rb') as file:
+        l_submissions = pickle.load(file)
+        print("Submission list:", l_submissions[:10])
+except Exception as e:
+    print(e)
+
+
+def sorting(lst):
+    return sorted(lst, key=lambda x: (x[2], int(x[0])))
+
+sorted_list = sorting(l_submissions)
+
+# Save pairing list with tqdm
+path_sorted = r"C:\Users\HP\Desktop\redditscrape\sorted\submissions.pickle"
+with open(path_sorted, 'wb') as file:
+    pickle.dump(sorted_list, file)

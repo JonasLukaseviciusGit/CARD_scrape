@@ -1,5 +1,4 @@
 import pickle
-from tqdm import tqdm
 
 # Specify the file path
 path_submissions = r"C:\Users\HP\Desktop\redditscrape\submissions-list.pickle"

@@ -14,7 +14,9 @@ def get_random_user_agent():
     return ua.random
 
 
-def get_google_scholar_urls(query, file_path, num_pages=10, minsleep=5, maxsleep=10):
+def get_google_scholar_urls(query, file_path, num_pages=10,
+                            minscroll=2, maxscroll=5,
+                            minsleep=5, maxsleep=10):
     print(f'\033[1m{"query:":<20}\033[0m {query}')
     print(f'\033[1m{"setting things up:":<20}\033[0m {datetime.now().strftime("%H:%M:%S"):>15}')
     urls = []
@@ -44,13 +46,13 @@ def get_google_scholar_urls(query, file_path, num_pages=10, minsleep=5, maxsleep
         driver.get(url)
 
         # Wait for 2-5 seconds before interacting with the page
-        time.sleep(random.uniform(2, 5))
+        time.sleep(random.uniform(minscroll, maxscroll))
 
         # Scroll down to load more results (simulate user scrolling)
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
         # Wait for 2-5 seconds after scrolling
-        time.sleep(random.uniform(2, 5))
+        time.sleep(random.uniform(minscroll, maxscroll))
 
         # Extract URLs from the loaded page
         results = driver.find_elements(By.XPATH, "//h3[@class='gs_rt']//a")
@@ -78,14 +80,24 @@ def save_urls_to_json(urls, page_number, file_path):
 
 
 # Example usage
-query = "pain management"
-num_pages = 2
+num_pages = 100
 
 # Execute
 start_time = time.time()
 
-file_path = r'C:\Users\HP\Desktop\CARD\google_scholar\urls.json'
-result_urls = get_google_scholar_urls(query, file_path, num_pages, minsleep=5, maxsleep=10)
+query = input('Enter query: ')
+maxsleep = int(input('Enter max sleep: '))
+
+minsleep = int(maxsleep/2)
+maxscroll = int(minsleep)
+minscroll = int(maxscroll/2)
+
+print(f'maxsleep: {maxsleep}, minsleep: {minsleep}, maxscroll: {maxscroll}, minscroll: {minscroll}')
+
+file_path = fr'C:\Users\HP\Desktop\CARD\google_scholar\{query}.json'
+result_urls = get_google_scholar_urls(query, file_path, num_pages,
+                                      minscroll=minscroll, maxscroll=maxscroll,
+                                      minsleep=minsleep, maxsleep=maxsleep)
 
 print('')
 print('----------------------------------------')

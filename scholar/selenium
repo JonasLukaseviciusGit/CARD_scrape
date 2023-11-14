@@ -6,6 +6,7 @@ from selenium.webdriver.common.keys import Keys
 from fake_useragent import UserAgent
 import json
 import time
+from datetime import datetime
 import random
 
 
@@ -15,11 +16,16 @@ def get_random_user_agent():
 
 
 def get_google_scholar_urls(query, num_pages=10):
+    print(f'\033[1m{"setting things up:":<20}\033[0m {datetime.now().strftime("%H:%M:%S"):>15}')
     urls = []
 
     chrome_options = Options()
     chrome_options.add_argument('--headless')  # Run Chrome in headless mode (without GUI)
-    chrome_options.add_argument(f'user-agent={get_random_user_agent()}')  # Set a random user-agent
+
+    random_user_agent = get_random_user_agent()
+    print(f'\033[1m{"random user agent:":<20}\033[0m {random_user_agent}')
+    print(f'\033[1m{". . ."}')
+    chrome_options.add_argument(f'user-agent={random_user_agent}')  # Set a random user-agent
 
     # Specify the path to your ChromeDriver executable
     chrome_path = r"C:\Users\HP\Desktop\chromedriver-win64\chromedriver-win64\chromedriver.exe"
@@ -27,8 +33,9 @@ def get_google_scholar_urls(query, num_pages=10):
     service = ChromeService(chrome_path)
     driver = webdriver.Chrome(service=service, options=chrome_options)
 
+    print(f'\033[1m{"starting scraping:":<20}\033[0m {datetime.now().strftime("%H:%M:%S"):>15}')
     for page in range(num_pages):
-        start = page * 10
+        start = page * 10 - 10
         url = f"https://scholar.google.com/scholar?q={query.replace(' ', '+')}&start={start}"
 
         driver.get(url)
@@ -68,6 +75,8 @@ def save_urls_to_json(urls, page_number):
 # Example usage
 query = "pain management"
 num_pages = 3
+
+# Execute
 result_urls = get_google_scholar_urls(query, num_pages)
 
 print(f"Saved {len(result_urls)} Google Scholar URLs.")

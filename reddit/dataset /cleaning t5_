@@ -1,0 +1,27 @@
+import pickle
+from tqdm import tqdm
+
+path_comments = r"C:\Users\HP\Desktop\redditscrape\comments-list.pickle"
+new_path_comments = r"C:\Users\HP\Desktop\redditscrape\comments-list-clean.pickle"
+
+# Load comment list
+try:
+    with open(path_comments, 'rb') as file:
+        l_comments = pickle.load(file)
+        print("Original comments:", l_comments[:10])
+except Exception as e:
+    print(e)
+
+# Modify _ids with a progress bar
+for comment in tqdm(l_comments, desc="Processing comments", unit="comment"):
+    _id = comment[3]
+    new_id = _id[3:]
+    comment[3] = new_id
+
+# Save modified list
+try:
+    with open(new_path_comments, 'wb') as file:
+        pickle.dump(l_comments, file)
+        print("Modified comments saved to:", new_path_comments)
+except Exception as e:
+    print(e)

@@ -34,10 +34,13 @@ def get_google_scholar_urls(query, num_pages=10):
     driver = webdriver.Chrome(service=service, options=chrome_options)
 
     print(f'\033[1m{"starting scraping:":<20}\033[0m {datetime.now().strftime("%H:%M:%S"):>15}')
+    count = 0
     for page in range(num_pages):
-        start = page * 10 - 10
+        start = count * 10
         url = f"https://scholar.google.com/scholar?q={query.replace(' ', '+')}&start={start}"
 
+        print(f'\033[1m{"getting page   "}\033[0m {count + 1}{":"}{datetime.now().strftime("%H:%M:%S"):>18}')
+        time.sleep(10)
         driver.get(url)
 
         # Wait for 2-5 seconds before interacting with the page
@@ -59,6 +62,7 @@ def get_google_scholar_urls(query, num_pages=10):
 
         # Wait for 5-10 seconds before moving to the next page
         time.sleep(random.uniform(5, 10))
+        count += 1
 
     driver.quit()  # Close the browser session
 

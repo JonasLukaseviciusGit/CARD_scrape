@@ -15,7 +15,7 @@ def get_random_user_agent():
     return ua.random
 
 
-def get_google_scholar_urls(query, num_pages=10):
+def get_google_scholar_urls(query, num_pages=10, minsleep=5, maxsleep=10):
     print(f'\033[1m{"query:":<20}\033[0m {query}')
     print(f'\033[1m{"setting things up:":<20}\033[0m {datetime.now().strftime("%H:%M:%S"):>15}')
     urls = []
@@ -38,10 +38,10 @@ def get_google_scholar_urls(query, num_pages=10):
     count = 0
     for page in range(num_pages):
         start = count * 10
-        url = f"https://scholar.google.com/scholar?q={query.replace(' ', '+')}&start={start}"
+        url = f"https://scholar.google.com/scholar?start={start}&q=pain+management&hl=lt&as_sdt=0,5"
+        print(url)
 
         print(f'\033[1m{"getting page   "}\033[0m {count + 1}{":"}{datetime.now().strftime("%H:%M:%S"):>18}')
-        time.sleep(10)
         driver.get(url)
 
         # Wait for 2-5 seconds before interacting with the page
@@ -62,7 +62,9 @@ def get_google_scholar_urls(query, num_pages=10):
         save_urls_to_json(urls, page + 1)  # Page numbers start from 1
 
         # Wait for 5-10 seconds before moving to the next page
-        time.sleep(random.uniform(5, 10))
+        sleeptime = random.uniform(minsleep, maxsleep)
+        print(f'   sleeping for {sleeptime:.2f} seconds')
+        time.sleep(sleeptime)
         count += 1
 
     driver.quit()  # Close the browser session
@@ -82,6 +84,6 @@ query = "pain management"
 num_pages = 3
 
 # Execute
-result_urls = get_google_scholar_urls(query, num_pages)
+result_urls = get_google_scholar_urls(query, num_pages, minsleep=5, maxsleep=10)
 
 print(f"Saved {len(result_urls)} Google Scholar URLs.")

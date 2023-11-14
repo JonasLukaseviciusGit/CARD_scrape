@@ -1,13 +1,15 @@
 import pickle
+from tqdm import tqdm
 
 # Specify the file path
 path_submissions = r"C:\Users\HP\Desktop\redditscrape\submissions-list.pickle"
-path_comments = r"C:\Users\HP\Desktop\redditscrape\comments-list.pickle"
+path_comments = r"C:\Users\HP\Desktop\redditscrape\comments-list-clean.pickle"
 
 # Load submission list
 try:
     with open(path_submissions, 'rb') as file:
         l_submissions = pickle.load(file)
+        print("Submission list:", l_submissions[:10])
 except Exception as e:
     print(e)
 
@@ -15,13 +17,14 @@ except Exception as e:
 try:
     with open(path_comments, 'rb') as file:
         l_comments = pickle.load(file)
+        print("Comment list:", l_comments[:10])
 except Exception as e:
     print(e)
 
 pairing = []
 
-a = 0
-for submission in l_submissions:
+# Use tqdm to add a progress bar
+for a, submission in enumerate(tqdm(l_submissions, desc="Processing submissions", unit="submission")):
     _id = submission[2]
     _list = [_id, None, None, None]
     for comment in l_comments:
@@ -36,13 +39,9 @@ for submission in l_submissions:
         elif _id == parent_id:
             _list[3] = index
     pairing.append(_list)
-    print(f'submission: {a}')
-    a += 1
-    if a == 10:
-        break
 
+# Save pairing list with tqdm
 path_pairing = r"C:\Users\HP\Desktop\redditscrape\pairing-list.pickle"
-# Saving the list to a file using pickle
 with open(path_pairing, 'wb') as file:
     pickle.dump(pairing, file)
 

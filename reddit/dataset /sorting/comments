@@ -1,7 +1,7 @@
 import pickle
 
 # Specify the file path
-path_submissions = r"C:\Users\HP\Desktop\redditscrape\comments-list.pickle"
+path_submissions = r"C:\Users\HP\Desktop\redditscrape\comments-list-clean.pickle"
 
 # Load submission list
 try:

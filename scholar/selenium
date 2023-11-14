@@ -2,7 +2,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.keys import Keys
 from fake_useragent import UserAgent
 import json
 import time
@@ -15,7 +14,7 @@ def get_random_user_agent():
     return ua.random
 
 
-def get_google_scholar_urls(query, num_pages=10, minsleep=5, maxsleep=10):
+def get_google_scholar_urls(query, file_path, num_pages=10, minsleep=5, maxsleep=10):
     print(f'\033[1m{"query:":<20}\033[0m {query}')
     print(f'\033[1m{"setting things up:":<20}\033[0m {datetime.now().strftime("%H:%M:%S"):>15}')
     urls = []
@@ -39,9 +38,9 @@ def get_google_scholar_urls(query, num_pages=10, minsleep=5, maxsleep=10):
     for page in range(num_pages):
         start = count * 10
         url = f"https://scholar.google.com/scholar?start={start}&q=pain+management&hl=lt&as_sdt=0,5"
-        print(url)
 
-        print(f'\033[1m{"getting page   "}\033[0m {count + 1}{":"}{datetime.now().strftime("%H:%M:%S"):>18}')
+        print(f'\033[1m\033[92m{"getting page   "}\033[0m {count + 1}{":"}{datetime.now().strftime("%H:%M:%S"):>18}')
+        print(f'  {url}')
         driver.get(url)
 
         # Wait for 2-5 seconds before interacting with the page
@@ -59,7 +58,7 @@ def get_google_scholar_urls(query, num_pages=10, minsleep=5, maxsleep=10):
             urls.append(result.get_attribute('href'))
 
         # Save URLs after processing each page
-        save_urls_to_json(urls, page + 1)  # Page numbers start from 1
+        save_urls_to_json(urls, page + 1, file_path)  # Page numbers start from 1
 
         # Wait for 5-10 seconds before moving to the next page
         sleeptime = random.uniform(minsleep, maxsleep)
@@ -72,8 +71,7 @@ def get_google_scholar_urls(query, num_pages=10, minsleep=5, maxsleep=10):
     return urls
 
 
-def save_urls_to_json(urls, page_number):
-    file_path = r'C:\Users\HP\Desktop\CARD\google_scholar\urls.json'
+def save_urls_to_json(urls, page_number, file_path):
     with open(file_path, 'a') as json_file:
         json.dump({'page': page_number, 'urls': urls}, json_file)
         json_file.write('\n')  # Add a newline after each set of URLs for different pages
@@ -81,9 +79,19 @@ def save_urls_to_json(urls, page_number):
 
 # Example usage
 query = "pain management"
-num_pages = 3
+num_pages = 2
 
 # Execute
-result_urls = get_google_scholar_urls(query, num_pages, minsleep=5, maxsleep=10)
+start_time = time.time()
 
-print(f"Saved {len(result_urls)} Google Scholar URLs.")
+file_path = r'C:\Users\HP\Desktop\CARD\google_scholar\urls.json'
+result_urls = get_google_scholar_urls(query, file_path, num_pages, minsleep=5, maxsleep=10)
+
+print('')
+print('----------------------------------------')
+num_of_results = len(result_urls)
+time_passed = time.time() - start_time
+print(f"Saved {num_of_results} Google Scholar URLs.")
+print(f'\033[1m{"completed in: ":<15}\033[0m {time_passed:>15.2f} seconds')
+print(f'\033[1m{"average: ":<15}\033[0m {time_passed/num_pages:>15.2f} seconds / page')
+print(f'{datetime.now().strftime("%H:%M:%S"):>15}')

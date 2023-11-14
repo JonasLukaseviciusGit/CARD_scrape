@@ -16,6 +16,7 @@ def get_random_user_agent():
 
 
 def get_google_scholar_urls(query, num_pages=10):
+    print(f'\033[1m{"query:":<20}\033[0m {query}')
     print(f'\033[1m{"setting things up:":<20}\033[0m {datetime.now().strftime("%H:%M:%S"):>15}')
     urls = []
 

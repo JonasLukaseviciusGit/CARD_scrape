@@ -1,11 +1,5 @@
 import json
 
-path_comments = r"C:\Users\HP\Desktop\redditscrape\comments-list.pickle"
-
-# with open(path_comments, 'rb') as file:
-#     comments = pickle.load(file)
-#     print("Comment list:", comments[:10])
-
 total_list = []
 
 for i in range(1, 125):
@@ -32,7 +26,7 @@ for i in range(1, 125):
             total_list.append(subdict)
             j += 1
 
-path_result = r"C:\Users\HP\Desktop\CARD\redditscrape\comments_library.json"  # Change file extension to .json
+path_result = r"C:\Users\HP\Desktop\CARD\redditscrape\submissions_library.json"  # Change file extension to .json
 with open(path_result, 'w') as file:  # Change 'wb' to 'w' here
     json.dump(total_list, file)
 print('done!')

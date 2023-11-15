@@ -1,0 +1,38 @@
+import json
+
+path_comments = r"C:\Users\HP\Desktop\redditscrape\comments-list.pickle"
+
+# with open(path_comments, 'rb') as file:
+#     comments = pickle.load(file)
+#     print("Comment list:", comments[:10])
+
+total_list = []
+
+for i in range(1, 125):
+    if i < 10:
+        idx = '00' + str(i)
+    elif i < 100:
+        idx = '0' + str(i)
+    else:
+        idx = str(i)
+    print(idx)
+    path = fr"C:\Users\HP\Desktop\CARD\redditscrape\submissions\{idx}.json"
+    with open(path, 'r') as file:  # Change 'rb' to 'r' here
+        submission = json.load(file)
+        j = 0
+        for comment in submission:
+            subdict = {}
+            subdict['id'] = comment['id']
+            subdict['title'] = comment['title']
+            subdict['author'] = comment['author']
+            subdict['num_comments'] = comment['num_comments']
+            subdict['created_utc'] = comment['created_utc']
+            subdict['path_index'] = [idx, j]
+            # subdict['retrieved_on'] = comment['retrieved_on']
+            total_list.append(subdict)
+            j += 1
+
+path_result = r"C:\Users\HP\Desktop\CARD\redditscrape\comments_library.json"  # Change file extension to .json
+with open(path_result, 'w') as file:  # Change 'wb' to 'w' here
+    json.dump(total_list, file)
+print('done!')

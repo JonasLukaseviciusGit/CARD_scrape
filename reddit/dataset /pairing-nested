@@ -1,0 +1,54 @@
+import pickle
+from tqdm import tqdm
+
+# Specify the file path
+path_submissions = r"C:\Users\HP\Desktop\redditscrape\submissions-list.pickle"
+path_comments = r"C:\Users\HP\Desktop\redditscrape\sorted\comments-grouped-2.pickle"
+
+# Load submission list
+try:
+    with open(path_submissions, 'rb') as file:
+        l_submissions = pickle.load(file)
+        print("Submission list:", l_submissions[:10])
+except Exception as e:
+    print(e)
+
+# Load comment list
+try:
+    with open(path_comments, 'rb') as file:
+        l_comments = pickle.load(file)
+        keys = list(l_comments.keys())
+        print(keys[:10])
+        print("Comment list:", l_comments[keys[0]])
+except Exception as e:
+    print(e)
+
+pairing = []
+
+# Use tqdm to add a progress bar
+for a, submission in enumerate(tqdm(l_submissions, desc="Processing submissions", unit="submission")):
+    _id = submission[2]
+    _list = [_id, None, None, None]
+    sublist = None
+    for key in keys:
+        if _id[0:2] == l_comments[key][0][3][0:2]:
+            sublist = l_comments[key]
+    for comment in sublist:
+        index = [comment[0], comment[1]]
+        c_id = comment[2]
+        link_id = comment[3]
+        parent_id = comment[4]
+        if _id == c_id:
+            _list[1] = index
+        elif _id == link_id:
+            _list[2] = index
+        elif _id == parent_id:
+            _list[3] = index
+    pairing.append(_list)
+
+# Save pairing list with tqdm
+path_pairing = r"C:\Users\HP\Desktop\redditscrape\pairing-list.pickle"
+with open(path_pairing, 'wb') as file:
+    pickle.dump(pairing, file)
+
+print('Done!')

@@ -1,0 +1,39 @@
+import requests
+import xml.etree.ElementTree as ET
+import passwords
+
+
+def get_xml_content(url):
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.content
+    else:
+        print(f"Error: Unable to fetch content. Status code: {response.status_code}")
+        return None
+
+
+def extract_description(xml_content):
+    root = ET.fromstring(xml_content)
+    namespace = {'dc': 'http://purl.org/dc/elements/1.1/'}
+
+    # Find the <dc:description> element
+    description_element = root.find('.//dc:description', namespaces=namespace)
+
+    if description_element is not None:
+        return description_element.text
+    else:
+        print("Error: <dc:description> element not found.")
+        return None
+
+
+if __name__ == "__main__":
+    api_url = f"https://api.elsevier.com/content/article/pii/S0885392402004116?APIKey={passwords.sciencedirect_API}"
+
+    xml_content = get_xml_content(api_url)
+
+    if xml_content is not None:
+        description_text = extract_description(xml_content)
+
+        if description_text is not None:
+            print("Textual content of <dc:description>:")
+            print(description_text)

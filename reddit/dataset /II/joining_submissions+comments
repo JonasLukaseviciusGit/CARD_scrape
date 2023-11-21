@@ -1,4 +1,5 @@
 import json
+from tqdm import tqdm  # Import tqdm for the progress bar
 
 path_pairs = r"C:\Users\HP\Desktop\redditscrape\paired\paired_mini.json"
 path_container = r"C:\Users\HP\Desktop\redditscrape\final\PostFoldersContainer"
@@ -11,7 +12,8 @@ path_result = r"C:\Users\HP\Desktop\redditscrape\final\PostFoldersContainer"
 with open(path_pairs, 'r') as f:
     pairs = json.load(f)
 
-for pair in pairs:
+# Use tqdm to create a progress bar for the loop
+for pair in tqdm(pairs, desc="Processing pairs"):
     submission_index = str(pair[0][0]) + '_' + str(pair[0][1])
     submission_path = path_submissions + '\\' + submission_index + '.json'
     with open(submission_path, 'r') as f:

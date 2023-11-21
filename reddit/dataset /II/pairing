@@ -1,5 +1,6 @@
 import pickle
 import json
+from tqdm import tqdm
 
 c_path = r"C:\Users\HP\Desktop\redditscrape\comments-grouped.pickle"
 s_path = r"C:\Users\HP\Desktop\redditscrape\submissions-list.pickle"
@@ -12,7 +13,7 @@ with open(s_path, 'rb') as f:
 
 total = []
 
-for submission in submissions:
+for submission in tqdm(submissions, desc="Processing submissions", unit="submission"):
     aim = submission[2]
 
     index = submission[2][:2]
@@ -29,4 +30,5 @@ t_path = r"C:\Users\HP\Desktop\redditscrape\paired.json"
 
 with open(t_path, 'w') as f:
     json.dump(total, f)
+
 print('Done')

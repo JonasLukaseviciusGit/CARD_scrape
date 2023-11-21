@@ -11,6 +11,22 @@ with open(pairing_path, "r") as f:
 print(pairing)
 
 a = 1
+
+
+def get_structured_data(raw_data):
+    DatePosted = raw_data['created_utc']
+    DateRetrieved = raw_data['retrieved_on']
+    NumComments = raw_data['num_comments']
+    Title = raw_data['title']
+    ID = raw_data['id']
+    nUps = raw_data['ups']
+    nDowns = raw_data['downs']
+    Score = raw_data['score']
+    Author = raw_data['author']
+    metadata = [DatePosted, DateRetrieved, NumComments, Title, ID, nUps, nDowns, Score, Author]
+    return metadata
+
+
 while a < 126:
     if a < 10:
         index = "00" + str(a)
@@ -22,16 +38,7 @@ while a < 126:
     with open(sPath, "r") as f:
         submissions = json.load(f)
     for submission in submissions[:10]:
-        s_DatePosted = submission['created_utc']
-        s_DateRetrieved = submission['retrieved_on']
-        s_NumComments = submission['num_comments']
-        s_Title = submission['title']
-        s_ID = submission['id']
-        s_nUps = submission['ups']
-        s_nDowns = submission['downs']
-        s_Score = submission['score']
-        s_Author = submission['author']
-        metadata = [s_DatePosted, s_DateRetrieved, s_NumComments, s_Title, s_ID, s_nUps, s_nDowns, s_Score, s_Author]
+        metadata = get_structured_data(submission)
         print(metadata)
     a += 1
     break

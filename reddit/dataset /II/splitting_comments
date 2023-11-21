@@ -1,0 +1,31 @@
+import json
+from tqdm import tqdm
+
+container_folder = r"C:\Users\HP\Desktop\redditscrape\final\Crude\comments"
+comments_folder = r"C:\Users\HP\Desktop\redditscrape\comments"
+
+a = 1
+total_a = 336  # Total number of iterations for the outer loop
+
+# Outer loop progress bar
+with tqdm(total=total_a, desc="Processing") as outer_pbar:
+    while a <= total_a:
+        index = str(a).zfill(3)
+        comments_path = comments_folder + "\\" + index + ".json"
+
+        with open(comments_path, "r") as f:
+            comments = json.load(f)
+
+        b = 0
+        total = len(comments)
+
+        while b < total - 1:
+            containerPath = container_folder + "\\" + index + "_" + str(b) + ".json"
+            with open(containerPath, "w") as f:
+                json.dump(comments[b], f)
+            b += 1
+
+        a += 1
+        outer_pbar.update(1)
+
+print("Done")

@@ -1,7 +1,7 @@
 import json
 from tqdm import tqdm  # Import tqdm for the progress bar
 
-path_pairs = r"C:\Users\HP\Desktop\redditscrape\paired\paired_mini.json"
+path_pairs = r"C:\Users\HP\Desktop\redditscrape\paired\paired.json"
 path_container = r"C:\Users\HP\Desktop\redditscrape\final\PostFoldersContainer"
 
 path_submissions = r"C:\Users\HP\Desktop\redditscrape\final\Crude\submissions"

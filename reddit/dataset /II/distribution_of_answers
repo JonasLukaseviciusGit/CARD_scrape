@@ -1,0 +1,82 @@
+import json
+import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
+
+t_path = r"C:\Users\HP\Desktop\redditscrape\paired.json"
+
+with open(t_path, 'r') as f:
+    data = json.load(f)
+
+lengths = []
+for element in data:
+    lengths.append(len(element[1]))
+
+# Display the distribution using matplotlib
+categories = {
+    '0': 0,
+    '1': 0,
+    '2': 0,
+    '3': 0,
+    '4': 0,
+    '5': 0,
+    '6-10': 0,
+    '11-20': 0,
+    '21-30': 0,
+    '31-40': 0,
+    '41-50': 0,
+    '50-75': 0,
+    '75-100': 0,
+    '100-1000': 0,
+    '1000+': 0,
+}
+
+for length in lengths:
+    if length == 0:
+        categories['0'] += 1
+    elif length == 1:
+        categories['1'] += 1
+    elif length == 2:
+        categories['2'] += 1
+    elif length == 3:
+        categories['3'] += 1
+    elif length == 4:
+        categories['4'] += 1
+    elif length == 5:
+        categories['5'] += 1
+    elif 6 <= length <= 10:
+        categories['6-10'] += 1
+    elif 11 <= length <= 20:
+        categories['11-20'] += 1
+    elif 21 <= length <= 30:
+        categories['21-30'] += 1
+    elif 31 <= length <= 40:
+        categories['31-40'] += 1
+    elif 41 <= length <= 50:
+        categories['41-50'] += 1
+    elif 50 <= length <= 75:
+        categories['50-75'] += 1
+    elif 75 <= length <= 100:
+        categories['75-100'] += 1
+    elif 100 <= length <= 1000:
+        categories['100-1000'] += 1
+    else:
+        categories['1000+'] += 1
+
+# Plotting the distribution
+labels, values = zip(*categories.items())
+fig, ax = plt.subplots()
+ax.bar(labels, values)
+
+# Adding tickers above the columns
+for label, value in zip(labels, values):
+    display_value = f'{value / 1000:.0f}k' if value > 1000 else str(value)
+    ax.text(label, value + 5, display_value, ha='center')
+
+# Format y-axis labels to display in thousands for values more than 1000
+ax.yaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{x / 1000:.0f}k' if x > 1000 else str(x)))
+
+plt.xlabel('Number of Elements in Submission')
+plt.ylabel('Number of Submissions')
+plt.title('Distribution of Elements in Submissions')
+plt.xticks(rotation=45, ha='right')  # Rotate x-axis labels for better visibility
+plt.show()

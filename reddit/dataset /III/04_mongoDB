@@ -58,17 +58,17 @@ for filename in tqdm(filenames, desc="Processing Files"):
     new_filename = fr'{folderPath}\{filename}.json'
     with open(new_filename, 'r') as f:
         data = json.load(f)
+        if type(data) == dict:
+            submission = data['submission']
+            parsedSubmission = parseSubmission(submission)
 
-        submission = data['submission']
-        parsedSubmission = parseSubmission(submission)
+            parsedComments = []
+            comments = data['comments']
+            if len(comments) != 0:
+                for comment in comments:
+                    if len(comment) != 0 and isinstance(comment, dict):
+                        parsedComment = parseComment(comment)
+                        parsedComments.append(parsedComment)
+            parsedSubmission['parsedComments'] = parsedComments
 
-        parsedComments = []
-        comments = data['comments']
-        if len(comments) != 0:
-            for comment in comments:
-                if len(comment) != 0 and isinstance(comment, dict):
-                    parsedComment = parseComment(comment)
-                    parsedComments.append(parsedComment)
-        parsedSubmission['parsedComments'] = parsedComments
-
-        collection.insert_one(parsedSubmission)
+            collection.insert_one(parsedSubmission)

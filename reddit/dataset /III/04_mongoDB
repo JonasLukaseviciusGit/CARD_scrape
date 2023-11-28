@@ -1,5 +1,6 @@
 import json
 from pymongo import MongoClient
+from tqdm import tqdm
 
 client = MongoClient('localhost', 27017)
 db = client['redditPosts']
@@ -53,9 +54,8 @@ def parseComment(comment):
     return new_comment
 
 folderPath = r"C:\Users\HP\Desktop\redditscrape\final\PostFoldersContainer"
-for filename in filenames:
+for filename in tqdm(filenames, desc="Processing Files"):
     new_filename = fr'{folderPath}\{filename}.json'
-    print(new_filename)
     with open(new_filename, 'r') as f:
         data = json.load(f)
 
@@ -66,11 +66,9 @@ for filename in filenames:
         comments = data['comments']
         if len(comments) != 0:
             for comment in comments:
-                if len(comment) != 0:
+                if len(comment) != 0 and isinstance(comment, dict):
                     parsedComment = parseComment(comment)
                     parsedComments.append(parsedComment)
         parsedSubmission['parsedComments'] = parsedComments
 
-        print(parsedSubmission)
-        print('')
         collection.insert_one(parsedSubmission)

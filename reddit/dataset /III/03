@@ -1,0 +1,62 @@
+import json
+
+filenames_path = r"C:\Users\HP\Desktop\redditscrape\final\filenames.json"
+with open(filenames_path, 'r') as f:
+    data = json.load(f)
+filenames = data['data']
+
+
+def parseSubmission(submission):
+    if len(submission) != 0:
+        new_submission = {
+            'title': submission.get('title', 'key does not exist'),
+            'author': submission.get('author', 'key does not exist'),
+            'created_utc': submission.get('created_utc', 'key does not exist'),
+            'text': submission.get('selftext', 'key does not exist'),
+            'ups': submission.get('ups', 'key does not exist'),
+            'downs': submission.get('downs', 'key does not exist'),
+            'score': submission.get('score', 'key does not exist'),
+            'num_comments': submission.get('num_comments', 'key does not exist'),
+            'id': submission.get('id', 'key does not exist'),
+            'other_data': {
+                'over_18': submission.get('over_18', 'key does not exist'),
+                'thumbnail': submission.get('thumbnail', 'key does not exist'),
+                'url': submission.get('url', 'key does not exist'),
+                'link_flair_text': submission.get('link_flair_text', 'key does not exist'),
+                'edited': submission.get('edited', 'key does not exist'),
+                'selftext': submission.get('selftext', 'key does not exist'),
+                'selftext_html': submission.get('selftext_html', 'key does not exist'),
+                'user_reports': submission.get('user_reports', 'key does not exist'),
+                'author_flair_text': submission.get('author_flair_text', 'key does not exist'),
+                'distinguished': submission.get('distinguished', 'key does not exist'),
+                'domain': submission.get('domain', 'key does not exist'),
+                'subreddit_id': submission.get('subreddit_id', 'key does not exist'),
+                'subreddit': submission.get('subreddit', 'key does not exist'),
+                'report_reasons': submission.get('report_reasons', 'key does not exist'),
+                'is_self': submission.get('is_self', 'key does not exist'),
+                'permalink': submission.get('permalink', 'key does not exist'),
+                'stickied': submission.get('stickied', 'key does not exist'),
+                'gilded': submission.get('gilded', 'key does not exist'),
+                'secure_media': submission.get('secure_media', 'key does not exist'),
+                'media': submission.get('media', 'key does not exist'),
+                'mod_reports': submission.get('mod_reports', 'key does not exist'),
+                'secure_media_embed': submission.get('secure_media_embed', 'key does not exist'),
+                'author_flair_css_class': submission.get('author_flair_css_class', 'key does not exist'),
+                'media_embed': submission.get('media_embed', 'key does not exist'),
+                'banned_by': submission.get('banned_by', 'key does not exist'),
+                'retrieved_on': submission.get('retrieved_on', 'key does not exist')
+            }
+        }
+
+        return new_submission
+
+
+folderPath = r"C:\Users\HP\Desktop\redditscrape\final\PostFoldersContainer"
+for filename in filenames:
+    new_filename = fr'{folderPath}\{filename}.json'
+    print(new_filename)
+    with open(new_filename, 'r') as f:
+        data = json.load(f)
+        print(data)
+        submission = data['submission']
+        parseSubmission(submission)

@@ -34,14 +34,43 @@ def parseSubmission(submission):
         return new_submission
 
 
+def parseComment(comment):
+    new_comment = {
+        'author': comment.get('author', 'key does not exist'),
+        'ups': comment.get('ups', 'key does not exist'),
+        'downs': comment.get('downs', 'key does not exist'),
+        'created_utc': comment.get('created_utc', 'key does not exist'),
+        'body': comment.get('body', 'key does not exist'),
+        'score': comment.get('score', 'key does not exist'),
+        'other_data': {}
+    }
+
+    # Include all keys and values from comment that were not taken previously
+    for key, value in comment.items():
+        if key not in new_comment:
+            new_comment['other_data'][key] = value
+
+    return new_comment
+
 folderPath = r"C:\Users\HP\Desktop\redditscrape\final\PostFoldersContainer"
 for filename in filenames:
     new_filename = fr'{folderPath}\{filename}.json'
     print(new_filename)
     with open(new_filename, 'r') as f:
         data = json.load(f)
+
         submission = data['submission']
-        parsed = parseSubmission(submission)
-        print(parsed)
+        parsedSubmission = parseSubmission(submission)
+
+        parsedComments = []
+        comments = data['comments']
+        if len(comments) != 0:
+            for comment in comments:
+                if len(comment) != 0:
+                    parsedComment = parseComment(comment)
+                    parsedComments.append(parsedComment)
+        parsedSubmission['parsedComments'] = parsedComments
+
+        print(parsedSubmission)
         print('')
-        collection.insert_one(parsed)
+        collection.insert_one(parsedSubmission)

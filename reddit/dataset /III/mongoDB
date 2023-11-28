@@ -1,0 +1,47 @@
+import json
+from pymongo import MongoClient
+
+client = MongoClient('localhost', 27017)
+db = client['redditPosts']
+collection = db['data']
+
+filenames_path = r"C:\Users\HP\Desktop\redditscrape\final\filenames.json"
+with open(filenames_path, 'r') as f:
+    data = json.load(f)
+filenames = data['data']
+
+
+def parseSubmission(submission):
+    if len(submission) != 0:
+        new_submission = {
+            'title': submission.get('title', 'key does not exist'),
+            'author': submission.get('author', 'key does not exist'),
+            'created_utc': submission.get('created_utc', 'key does not exist'),
+            'text': submission.get('selftext', 'key does not exist'),
+            'ups': submission.get('ups', 'key does not exist'),
+            'downs': submission.get('downs', 'key does not exist'),
+            'score': submission.get('score', 'key does not exist'),
+            'num_comments': submission.get('num_comments', 'key does not exist'),
+            'id': submission.get('id', 'key does not exist'),
+            'other_data': {}
+        }
+
+        # Include all keys and values from submission that were not taken previously
+        for key, value in submission.items():
+            if key not in new_submission:
+                new_submission['other_data'][key] = value
+
+        return new_submission
+
+
+folderPath = r"C:\Users\HP\Desktop\redditscrape\final\PostFoldersContainer"
+for filename in filenames:
+    new_filename = fr'{folderPath}\{filename}.json'
+    print(new_filename)
+    with open(new_filename, 'r') as f:
+        data = json.load(f)
+        submission = data['submission']
+        parsed = parseSubmission(submission)
+        print(parsed)
+        print('')
+        collection.insert_one(parsed)

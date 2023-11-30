@@ -14,9 +14,10 @@ def get_random_user_agent():
     return ua.random
 
 
-def get_google_scholar_urls(query, file_path, num_pages=10,
+def get_google_scholar_urls(query, file_path, num_pages=1,
                             minscroll=2, maxscroll=5,
                             minsleep=5, maxsleep=10):
+    query = query.replace(' ', '+')
     print(f'\033[1m{"query:":<20}\033[0m {query}')
     print(f'\033[1m{"setting things up:":<20}\033[0m {datetime.now().strftime("%H:%M:%S"):>15}')
     urls = []
@@ -30,7 +31,8 @@ def get_google_scholar_urls(query, file_path, num_pages=10,
     chrome_options.add_argument(f'user-agent={random_user_agent}')  # Set a random user-agent
 
     # Specify the path to your ChromeDriver executable
-    chrome_path = r"C:\Users\HP\Desktop\chromedriver-win64\chromedriver-win64\chromedriver.exe"
+    #chrome_path = r"C:\Users\HP\Desktop\chromedriver-win64\chromedriver-win64\chromedriver.exe"
+    chrome_path = r"C:\Users\HP\Desktop\chromedriver\chromedriver-win64\chromedriver.exe"
 
     service = ChromeService(chrome_path)
     driver = webdriver.Chrome(service=service, options=chrome_options)
@@ -38,8 +40,8 @@ def get_google_scholar_urls(query, file_path, num_pages=10,
     print(f'\033[1m{"starting scraping:":<20}\033[0m {datetime.now().strftime("%H:%M:%S"):>15}')
     count = 0
     for page in range(num_pages):
-        start = count * 10
-        url = f"https://scholar.google.com/scholar?start={start}&q=pain+management&hl=lt&as_sdt=0,5"
+        #url = f"https://scholar.google.com/scholar?start={page}&q=pain+management&hl=lt&as_sdt=0,5"
+        url = f"https://scholar.google.com/scholar?start={count}&q={query}&hl=lt&as_sdt=2007"
 
         print(f'\033[1m\033[92m{"getting page   "}\033[0m {count + 1}{":"}{datetime.now().strftime("%H:%M:%S"):>18}')
         print(f'  {url}')
@@ -55,10 +57,6 @@ def get_google_scholar_urls(query, file_path, num_pages=10,
         # Wait for 2-5 seconds after scrolling
         time.sleep(random.uniform(minscroll, maxscroll))
 
-        # Printing page text content for debugging
-        print('\033[1m\033[91m' + '-' * 100 + '\033[0m')
-        body_text = driver.find_element(By.TAG_NAME, 'body').text
-        print(body_text)
         print('\033[1m\033[91m' + '-' * 100 + '\033[0m')
 
         # Extract URLs from the loaded page
@@ -73,7 +71,7 @@ def get_google_scholar_urls(query, file_path, num_pages=10,
         sleeptime = random.uniform(minsleep, maxsleep)
         print(f'   sleeping for {sleeptime:.2f} seconds')
         time.sleep(sleeptime)
-        count += 1
+        count += 10
 
     driver.quit()  # Close the browser session
 
@@ -86,13 +84,11 @@ def save_urls_to_json(urls, page_number, file_path):
         json_file.write('\n')  # Add a newline after each set of URLs for different pages
 
 
-# Example usage
-num_pages = 3
-
 # Execute
 start_time = time.time()
 
 query = input('Enter query: ')
+num_pages = int(input('Enter number of pages: '))
 maxsleep = int(input('Enter max sleep: '))
 
 minsleep = int(maxsleep/2)

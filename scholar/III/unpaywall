@@ -1,16 +1,24 @@
 import requests
 import passwords
+from pymongo import MongoClient
+
+client = MongoClient('localhost', 27017)
+db = client['UnpaywallArticles']
+collection = db['data']
 
 query = "pain management"
 email = passwords.email
-page = 1
 isOpenAccess = True
 
-url = f"https://api.unpaywall.org/v2/search?query={query}&is_oa={isOpenAccess}&page={page}&email={passwords.email}"
-
-response = requests.get(url).json()['results']
-
-for el in response:
-    print(el)
-
-print(len(response))
+page = 1
+while True:
+    print(page)
+    url = f"https://api.unpaywall.org/v2/search?query={query}&is_oa={isOpenAccess}&page={page}&email={passwords.email}"
+    response = requests.get(url).json()['results']
+    if len(response) != 0:
+        for article in response:
+            collection.insert_one(article)
+    else:
+        break
+    page += 1
+print('done')

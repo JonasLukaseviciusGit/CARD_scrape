@@ -2,62 +2,62 @@ from selenium import webdriver
 import time
 import pyautogui
 
-folderPath = r'C:\Users\HP\Desktop\CARD\google_scholar\articles'
-mouse_movement_duration = 0.01
-initial_wait_duration = 1.5
-wait_duration = 0
 
-# Function to perform the drag and left-click action
-def drag_and_left_click(x, y):
-    # Move to the specified position
-    pyautogui.moveTo(x, y, duration=mouse_movement_duration)
+def manual_downloading(folderPath=r'C:\Users\HP\Desktop\CARD\google_scholar\articles',
+                       mouse_movement_duration=0.01,
+                       initial_wait_duration=1.5,
+                       wait_duration=0,
+                       url='https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/lim2.13'):
+    # Function to perform the drag and left-click action
+    def drag_and_left_click(x, y):
+        # Move to the specified position
+        pyautogui.moveTo(x, y, duration=mouse_movement_duration)
 
-    # Perform the left-click action
-    pyautogui.click()
+        # Perform the left-click action
+        pyautogui.click()
 
-# Function to perform the drag and double-click action
-def drag_and_double_click(x, y):
-    # Move to the specified position
-    pyautogui.moveTo(x, y, duration=mouse_movement_duration)
+    # Function to perform the drag and double-click action
+    def drag_and_double_click(x, y):
+        # Move to the specified position
+        pyautogui.moveTo(x, y, duration=mouse_movement_duration)
 
-    # Perform the double-click action
-    pyautogui.doubleClick()
+        # Perform the double-click action
+        pyautogui.doubleClick()
 
-    pyautogui.hotkey('ctrl', 'a')
-    pyautogui.press('delete')
+        pyautogui.hotkey('ctrl', 'a')
+        pyautogui.press('delete')
 
-    # Paste the path and press enter
-    pyautogui.write(folderPath)
-    pyautogui.press('enter')
+        # Paste the path and press enter
+        pyautogui.write(folderPath)
+        pyautogui.press('enter')
 
-# Create a Chrome webdriver instance (assuming chromedriver is in your system's PATH)
-driver = webdriver.Chrome()
+    # Create a Chrome webdriver instance (assuming chromedriver is in your system's PATH)
+    driver = webdriver.Chrome()
 
-# Maximize the browser window
-driver.maximize_window()
+    # Maximize the browser window
+    driver.maximize_window()
 
-# Open the provided link in full screen
-url = 'https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/lim2.13'
-driver.get(url)
+    # Open the provided link in full screen
+    driver.get(url)
 
-# Wait for a few seconds (you may need to adjust this)
-time.sleep(initial_wait_duration)
+    # Wait for a few seconds (you may need to adjust this)
+    time.sleep(initial_wait_duration)
 
-# Coordinates for the actions
-click_coordinates = [
-    (1778, 174),    # download button
-    (362, 70),      # double click
-    (1714, 976),    # left click
-    (1891, 21)      # left click
-]
+    # Coordinates for the actions
+    click_coordinates = [
+        (1778, 174),  # download button
+        (362, 70),  # double click
+        (1714, 976),  # left click
+        (1891, 21)  # left click
+    ]
 
-# Perform the drag and click actions
-for coordinates in click_coordinates:
-    if coordinates == (362, 70):
-        drag_and_double_click(*coordinates)
-    else:
-        drag_and_left_click(*coordinates)
-    time.sleep(wait_duration)
+    # Perform the drag and click actions
+    for coordinates in click_coordinates:
+        if coordinates == (362, 70):
+            drag_and_double_click(*coordinates)
+        else:
+            drag_and_left_click(*coordinates)
+        time.sleep(wait_duration)
 
-# Close the browser window
-driver.quit()
+    # Close the browser window
+    driver.quit()

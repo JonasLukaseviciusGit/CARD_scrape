@@ -1,0 +1,17 @@
+import requests
+import os
+
+url = "https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/lim2.13"
+destination_folder = r"C:\Users\HP\Desktop\CARD\google_scholar\articles"
+file_name = "anesthesiology-painmanagement14.pdf"
+file_path = os.path.join(destination_folder, file_name)
+
+# Make sure the destination folder exists
+os.makedirs(destination_folder, exist_ok=True)
+
+# Download the PDF
+response = requests.get(url)
+with open(file_path, "wb") as pdf_file:
+    pdf_file.write(response.content)
+
+print(f"The PDF has been successfully downloaded to {file_path}")

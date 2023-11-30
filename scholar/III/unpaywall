@@ -56,7 +56,9 @@ while True:
         print('')
         count = 1
         for article in response:
-            collection.insert_one(article)
+            record = collection.insert_one(article)
+            record_id = record.inserted_id
+
             response = article['response']
             pdf_url = response['best_oa_location']['url_for_pdf']
             if pdf_url is not None:
@@ -68,9 +70,12 @@ while True:
                 wasDeleted = check_and_delete_file(file_path=filepath, size_threshold_kb=7)
                 if wasDeleted:
                     manual_downloading(folderPath=end_folder, url=pdf_url)
-                    rename_latest_file(directory_path=end_folder, new_name=title)
+                    file_path = rename_latest_file(directory_path=end_folder, new_name=title)
+                    if type(file_path) is list:
+                        collection.update_one({"_id": record_id}, {"$set": {"file_path": file_path[0]}})
                     print('Downloaded semi-manually')
                 else:
+                    collection.update_one({"_id": record_id}, {"$set": {"file_path": filepath}})
                     print('Downloaded automatically')
                 print('')
             count += 1

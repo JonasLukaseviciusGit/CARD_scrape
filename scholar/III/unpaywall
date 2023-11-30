@@ -2,9 +2,11 @@ import requests
 import passwords
 
 query = "pain management"
-email = "geerwg743@gmail.com"
+email = passwords.email
+page = 1
+isOpenAccess = True
 
-url = f"https://api.unpaywall.org/v2/search?query={query}&is_oa=true&email={passwords.email}"
+url = f"https://api.unpaywall.org/v2/search?query={query}&is_oa={isOpenAccess}&page={page}&email={passwords.email}"
 
 response = requests.get(url).json()['results']
 

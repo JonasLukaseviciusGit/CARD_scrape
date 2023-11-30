@@ -1,0 +1,40 @@
+from selenium import webdriver
+import time
+import pyautogui
+
+
+# Function to perform the drag and left-click action
+def drag_and_left_click(x, y):
+    # Move to the specified position
+    pyautogui.moveTo(x, y, duration=1)
+
+    # Perform the left-click action
+    pyautogui.click()
+
+# Create a Chrome webdriver instance (assuming chromedriver is in your system's PATH)
+driver = webdriver.Chrome()
+
+# Maximize the browser window
+driver.maximize_window()
+
+# Open the provided link in full screen
+url = 'https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/lim2.13'
+driver.get(url)
+
+# Wait for a few seconds (you may need to adjust this)
+time.sleep(2)
+
+# Coordinates for the left-click actions
+click_coordinates = [
+    (1778, 174),    # download button
+    (102, 647),     # Downloads folder button
+    (1714, 976),    # Save button
+    (1891, 21)     # Close the pdf window
+]
+
+# Perform the drag and left-click actions
+for coordinates in click_coordinates:
+    drag_and_left_click(*coordinates)
+
+# Close the browser window
+driver.quit()

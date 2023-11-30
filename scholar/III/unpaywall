@@ -2,6 +2,11 @@ import requests
 import passwords
 from pymongo import MongoClient
 import re
+import os
+import random
+from manual_downloading import manual_downloading
+from other_functions import check_and_delete_file, rename_latest_file, calculate_elapsed_time, count_files_in_folder
+import time
 
 client = MongoClient('localhost', 27017)
 db = client['UnpaywallArticles']
@@ -9,18 +14,26 @@ collection = db['data']
 
 query = "pain management"
 email = passwords.email
+end_folder = r"C:\Users\HP\Desktop\CARD\google_scholar\articles"
 isOpenAccess = True
 
 page = 1
 
 
-def download_pdf(url, title, doi):
-    pdf = requests.get(url)
-    folder = r"C:\Users\HP\Desktop\CARD\google_scholar\articles"
-    #filepath = folder + "\\" + title + "_" + doi + ".pdf"
-    filepath = folder + "\\" + title + ".pdf"
-    with open(filepath, "wb") as pdf_file:
-        pdf_file.write(pdf.content)
+def download_pdf(url, title, folder):
+    try:
+        pdf = requests.get(url)
+        file_name = title + ".pdf"
+        filepath = os.path.join(folder, file_name)
+        while os.path.exists(filepath):
+            random_number = random.randint(100, 999)
+            file_name = f"{title}_{random_number}.pdf"
+            filepath = os.path.join(folder, file_name)
+        with open(filepath, "wb") as pdf_file:
+            pdf_file.write(pdf.content)
+            return filepath
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 
 def clean_alphabetic(text):
@@ -30,26 +43,45 @@ def clean_alphabetic(text):
     return result
 
 
+time_start = time.time()
+
+attempts_to_download = 0
 while True:
     print(page)
     url = f"https://api.unpaywall.org/v2/search?query={query}&is_oa={isOpenAccess}&page={page}&email={passwords.email}"
     response = requests.get(url).json()['results']
-    if len(response) != 0:
+    num_of_elements = len(response)
+    if num_of_elements != 0:
         print('\033[91m' + '-' * 50 + '\033[0m')
-        print(f'\033[92mPage {page}\033[0m')
         print('')
+        count = 1
         for article in response:
             collection.insert_one(article)
             response = article['response']
             pdf_url = response['best_oa_location']['url_for_pdf']
             if pdf_url is not None:
                 title = clean_alphabetic(response['title'])
+                print(f'\033[92mPage {page} Element {count}/{num_of_elements}\033[0m')
                 print(pdf_url)
                 print(title)
+                filepath = download_pdf(pdf_url, title, end_folder)
+                wasDeleted = check_and_delete_file(file_path=filepath, size_threshold_kb=7)
+                if wasDeleted:
+                    manual_downloading(folderPath=end_folder, url=pdf_url)
+                    rename_latest_file(directory_path=end_folder, new_name=title)
+                    print('Downloaded semi-manually')
+                else:
+                    print('Downloaded automatically')
                 print('')
-                doi = response['doi']
-                download_pdf(pdf_url, title, doi)
+            count += 1
+            attempts_to_download += 1
     else:
         break
     page += 1
-print('done')
+
+time_end = time.time()
+elapsed_time = calculate_elapsed_time(time_start, time_end)
+total_files_downloaded = count_files_in_folder(end_folder)
+print('\033[91m' + '-' * 50 + '\033[0m')
+print('\033[92m PDFs downloaded successfully: {attempts_to_download}/{total_files_downloaded}\033[0m')
+print('\033[92m Elapsed time: {elapsed_time}\033[0m')

@@ -1,6 +1,7 @@
 import requests
 import passwords
 from pymongo import MongoClient
+import re
 
 client = MongoClient('localhost', 27017)
 db = client['UnpaywallArticles']
@@ -11,13 +12,43 @@ email = passwords.email
 isOpenAccess = True
 
 page = 1
+
+
+def download_pdf(url, title, doi):
+    pdf = requests.get(url)
+    folder = r"C:\Users\HP\Desktop\CARD\google_scholar\articles"
+    #filepath = folder + "\\" + title + "_" + doi + ".pdf"
+    filepath = folder + "\\" + title + ".pdf"
+    with open(filepath, "wb") as pdf_file:
+        pdf_file.write(pdf.content)
+
+
+def clean_alphabetic(text):
+    pattern = re.compile(r'<.*?>')              # remove angle brackets and their contents
+    result = re.sub(pattern, '', text)
+    result = re.sub(r'[^a-zA-Z ]', '', result)  # remove non-alphabetic characters
+    return result
+
+
 while True:
     print(page)
     url = f"https://api.unpaywall.org/v2/search?query={query}&is_oa={isOpenAccess}&page={page}&email={passwords.email}"
     response = requests.get(url).json()['results']
     if len(response) != 0:
+        print('\033[91m' + '-' * 50 + '\033[0m')
+        print(f'\033[92mPage {page}\033[0m')
+        print('')
         for article in response:
             collection.insert_one(article)
+            response = article['response']
+            pdf_url = response['best_oa_location']['url_for_pdf']
+            if pdf_url is not None:
+                title = clean_alphabetic(response['title'])
+                print(pdf_url)
+                print(title)
+                print('')
+                doi = response['doi']
+                download_pdf(pdf_url, title, doi)
     else:
         break
     page += 1

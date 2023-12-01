@@ -1,11 +1,13 @@
 from selenium import webdriver
 import time
 import pyautogui
+from PIL import Image, ImageGrab
+import os
 
 
 def manual_downloading(folderPath=r'C:\Users\HP\Desktop\CARD\google_scholar\articles',
                        mouse_movement_duration=0.01,
-                       initial_wait_duration=1.5,
+                       initial_wait_duration=2,
                        wait_duration=0,
                        url='https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/lim2.13'):
     # Function to perform the drag and left-click action
@@ -43,21 +45,34 @@ def manual_downloading(folderPath=r'C:\Users\HP\Desktop\CARD\google_scholar\arti
     # Wait for a few seconds (you may need to adjust this)
     time.sleep(initial_wait_duration)
 
-    # Coordinates for the actions
-    click_coordinates = [
-        (1778, 174),  # download button
-        (362, 70),  # double click
-        (1714, 976),  # left click
-        (1891, 21)  # left click
-    ]
+    # Check the presence of the download button
+    x1, y1, x2, y2 = 1770, 175, 1785, 195
+    screenshot = ImageGrab.grab(bbox=(x1, y1, x2, y2))
+    screenshot.save("screenshot.jpg")
+    download_button = Image.open("download_button.jpg")
+    screenshot = Image.open("screenshot.jpg")
+    screenshot = list(screenshot.getdata())
+    download_button = list(download_button.getdata())
+    if screenshot == download_button:
+        # Coordinates for the actions
+        click_coordinates = [
+            (1778, 174),  # download button
+            (362, 70),  # double click
+            (1714, 976),  # left click
+            (1891, 21)  # left click
+        ]
 
-    # Perform the drag and click actions
-    for coordinates in click_coordinates:
-        if coordinates == (362, 70):
-            drag_and_double_click(*coordinates)
-        else:
-            drag_and_left_click(*coordinates)
-        time.sleep(wait_duration)
+        # Perform the drag and click actions
+        for coordinates in click_coordinates:
+            if coordinates == (362, 70):
+                drag_and_double_click(*coordinates)
+            else:
+                drag_and_left_click(*coordinates)
+            time.sleep(wait_duration)
+        absolute_path = os.path.abspath("screenshot.jpg")
+        os.remove(absolute_path)
+    else:
+        pass
 
     # Close the browser window
     driver.quit()

@@ -3,36 +3,17 @@ import time
 import pyautogui
 from PIL import Image, ImageGrab
 import os
+import random
+import pyperclip
 
 
 def manual_downloading(folderPath=r'C:\Users\HP\Desktop\CARD\google_scholar\articles',
-                       mouse_movement_duration=0.01,
+                       mouse_movement_duration=1,
                        initial_wait_duration=2,
+                       click_wait=0.5,
                        wait_duration=0,
                        url='https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/lim2.13'):
-    # Function to perform the drag and left-click action
-    def drag_and_left_click(x, y):
-        # Move to the specified position
-        pyautogui.moveTo(x, y, duration=mouse_movement_duration)
-
-        # Perform the left-click action
-        pyautogui.click()
-
-    # Function to perform the drag and double-click action
-    def drag_and_double_click(x, y):
-        # Move to the specified position
-        pyautogui.moveTo(x, y, duration=mouse_movement_duration)
-
-        # Perform the double-click action
-        pyautogui.doubleClick()
-
-        pyautogui.hotkey('ctrl', 'a')
-        pyautogui.press('delete')
-
-        # Paste the path and press enter
-        pyautogui.write(folderPath)
-        pyautogui.press('enter')
-
+    filename = None
     # Create a Chrome webdriver instance (assuming chromedriver is in your system's PATH)
     driver = webdriver.Chrome()
 
@@ -48,9 +29,9 @@ def manual_downloading(folderPath=r'C:\Users\HP\Desktop\CARD\google_scholar\arti
     # Check the presence of the download button
     x1, y1, x2, y2 = 1770, 175, 1785, 195
     screenshot = ImageGrab.grab(bbox=(x1, y1, x2, y2))
-    screenshot.save("screenshot.jpg")
+    screenshot.save("screenshot-button.jpg")
     download_button = Image.open("download_button.jpg")
-    screenshot = Image.open("screenshot.jpg")
+    screenshot = Image.open("screenshot-button.jpg")
     screenshot = list(screenshot.getdata())
     download_button = list(download_button.getdata())
     if screenshot == download_button:
@@ -62,17 +43,54 @@ def manual_downloading(folderPath=r'C:\Users\HP\Desktop\CARD\google_scholar\arti
             (1891, 21)  # left click
         ]
 
-        # Perform the drag and click actions
-        for coordinates in click_coordinates:
-            if coordinates == (362, 70):
-                drag_and_double_click(*coordinates)
-            else:
-                drag_and_left_click(*coordinates)
-            time.sleep(wait_duration)
-        absolute_path = os.path.abspath("screenshot.jpg")
+        pyautogui.moveTo(1778, 174, duration=mouse_movement_duration)
+        pyautogui.click()
+        time.sleep(click_wait)
+
+        pyautogui.moveTo(362, 70, duration=mouse_movement_duration)
+        pyautogui.doubleClick()
+        pyautogui.hotkey('ctrl', 'a')
+        pyautogui.press('delete')
+        pyautogui.write(folderPath)
+        pyautogui.press('enter')
+
+        pyautogui.moveTo(1714, 976, duration=mouse_movement_duration)
+        pyautogui.click()
+        time.sleep(click_wait)
+        ImageGrab.grab(bbox=(1000, 510, 1190, 550)).save("screenshot-message.jpg")
+        message = list(Image.open("message.jpg").getdata())
+        screenshot = list(Image.open("screenshot-message.jpg").getdata())
+        if screenshot == message:
+            print('GOT A MESSAGE')
+            pyautogui.moveTo(1140, 537, duration=mouse_movement_duration)
+            pyautogui.click()
+            time.sleep(click_wait)
+            pyautogui.moveTo(1203, 885, duration=mouse_movement_duration)
+            pyautogui.click()
+            pyautogui.hotkey('ctrl', 'c')
+            filename = pyperclip.paste()
+            index = random.randint(100, 999)
+            filename = f'{filename}-{index}'
+            pyperclip.copy(filename)
+            pyautogui.press('delete')
+            pyautogui.hotkey('ctrl', 'v')
+            pyautogui.moveTo(1714, 976, duration=mouse_movement_duration)
+            pyautogui.click()
+            time.sleep(click_wait)
+            filename = index
+        else:
+            pass
+        pyautogui.moveTo(1891, 21, duration=mouse_movement_duration)
+        pyautogui.click()
+        time.sleep(click_wait)
+
+        absolute_path = os.path.abspath("screenshot-button.jpg")
+        os.remove(absolute_path)
+        absolute_path = os.path.abspath("screenshot-message.jpg")
         os.remove(absolute_path)
     else:
         pass
 
     # Close the browser window
     driver.quit()
+    return filename

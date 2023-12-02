@@ -1,0 +1,14 @@
+from pymongo import MongoClient
+
+# Connect to MongoDB
+client = MongoClient('localhost', 27017)
+db = client['UnpaywallArticles']
+collection = db['pain_management']
+
+# Get all articles
+articles = list(collection.find({"file_path": {"$exists": False}}))
+
+for article in articles:
+    print(article)
+
+print(len(articles))

@@ -1,0 +1,28 @@
+import os
+import fitz  # PyMuPDF
+
+def check_pdf_validity(pdf_path):
+    try:
+        with fitz.open(pdf_path) as pdf_document:
+            # Check the number of pages or any other property to ensure the file is valid
+            if pdf_document.page_count > 0:
+                return True, None
+            else:
+                return False, "Empty PDF"
+    except Exception as e:
+        return False, str(e)
+
+def main(folder_path):
+    for filename in os.listdir(folder_path):
+        if filename.endswith(".pdf"):
+            pdf_path = os.path.join(folder_path, filename)
+            is_valid, error_message = check_pdf_validity(pdf_path)
+
+            if is_valid:
+                print(f"\033[92m{filename} is a valid PDF.\033[0m")
+            else:
+                print(f"{filename} is not a valid PDF. Reason: {error_message}")
+
+if __name__ == "__main__":
+    folder_path = r"C:\Users\HP\Desktop\12-06\articles-1"
+    main(folder_path)

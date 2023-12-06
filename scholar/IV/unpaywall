@@ -1,0 +1,31 @@
+import requests
+from pymongo import MongoClient
+import passwords
+import time
+
+client = MongoClient('localhost', 27017)
+db = client['Articles']
+
+query = 'covid-19'
+collection_name = query.replace(' ', '_')
+collection = db[collection_name]
+
+email = passwords.email
+isOpenAccess = True
+
+elements = 0
+page = 1
+while True:
+    url = f"https://api.unpaywall.org/v2/search?query={query}&is_oa={isOpenAccess}&page={page}&email={passwords.email}"
+    result = requests.get(url).json()['results']
+    num_elements = len(result)
+    if num_elements == 0:
+        break
+    for article in result:
+        record = collection.insert_one(article)
+    elements += num_elements
+    time.sleep(1)
+    print(f'Page {page}; Inserted {num_elements} elements.')
+    page += 1
+print('\033[91m' + '-' * 50 + '\033[0m')
+print(f'Inserted {elements} elements to {collection_name} collection.')

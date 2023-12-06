@@ -18,15 +18,19 @@ successful_downloads = 0
 def download_pdf(url, folder_path):
     try:
         pdf = requests.get(url)
-        file_name = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10)) + ".pdf"
-        filepath = os.path.join(folder_path, file_name)
-        while os.path.exists(filepath):
+        if pdf.status_code == 200:
             file_name = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10)) + ".pdf"
             filepath = os.path.join(folder_path, file_name)
-        with open(filepath, "wb") as pdf_file:
-            pdf_file.write(pdf.content)
-            print(f'{url} DOWNLOADED')
-            return filepath
+            while os.path.exists(filepath):
+                file_name = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10)) + ".pdf"
+                filepath = os.path.join(folder_path, file_name)
+            with open(filepath, "wb") as pdf_file:
+                pdf_file.write(pdf.content)
+                print(f'{url} DOWNLOADED')
+                return filepath
+        else:
+            print(f'\033[91m{url} NOT DOWNLOADED ({pdf.status_code})\033[0m')
+            return 0
     except Exception as e:
         print(f"An error occurred: {e}")
         print(f'\033[91m{url} NOT DOWNLOADED ({e})\033[0m')

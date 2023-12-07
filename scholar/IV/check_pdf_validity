@@ -1,34 +1,29 @@
 import os
-import PyPDF2
+import fitz  # PyMuPDF
+
 
 def find_corrupted_pdfs(folder_path):
-    corrupted_pdfs = []
-
-    def is_pdf_valid(file_path):
+    corrupted = []
+    def check_pdf_validity(pdf_path):
         try:
-            with open(file_path, 'rb') as file:
-                pdf_reader = PyPDF2.PdfFileReader(file)
-                _ = pdf_reader.getNumPages()
-                return True
+            with fitz.open(pdf_path) as pdf_document:
+                # Check the number of pages or any other property to ensure the file is valid
+                if pdf_document.page_count > 0:
+                    return True, None
+                else:
+                    return False, "Empty PDF"
         except Exception as e:
-            print(f"Error reading {file_path}: {e}")
-            return False
+            return False, str(e)
 
     for filename in os.listdir(folder_path):
         if filename.endswith(".pdf"):
-            file_path = os.path.join(folder_path, filename)
-            if not is_pdf_valid(file_path):
-                corrupted_pdfs.append(file_path)
+            pdf_path = os.path.join(folder_path, filename)
+            is_valid, error_message = check_pdf_validity(pdf_path)
 
-    return corrupted_pdfs
-
-# Specify the folder path where your PDFs are located
-folder_path = r'C:\Users\HP\Desktop\articles'
-
-# Call the function to find corrupted PDF files in the specified folder
-corrupted_files = find_corrupted_pdfs(folder_path)
-
-# Print the list of corrupted files
-print("Corrupted PDFs:")
-for file_path in corrupted_files:
-    print(file_path)
+            if is_valid:
+                # print(f"\033[92m{filename} is a valid PDF.\033[0m")
+                pass
+            else:
+                # print(f"{filename} is not a valid PDF. Reason: {error_message}")
+                corrupted.append(pdf_path)
+    return corrupted

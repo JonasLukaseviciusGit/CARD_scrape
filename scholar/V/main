@@ -1,0 +1,30 @@
+from get_unpaywall_data import get_unpaywall_data
+from download_pdfs import download_pdfs
+from find_corrupted_pdfs import find_corrupted_pdfs
+import os
+from pymongo import MongoClient
+import passwords
+
+
+query = 'pain relief strategies'
+client = MongoClient('localhost', 27017)
+db = client['Articles']
+collection_name = query.replace(' ', '_')
+collection = db[collection_name]
+
+folderPath = os.path.join(r'C:\Users\HP\Desktop\articles', collection_name)
+
+os.makedirs(folderPath) if not os.path.exists(folderPath) else None
+
+unpaywall_data = get_unpaywall_data(query, passwords.email, is_open_access=True)
+print(f'Number of articles: {len(unpaywall_data)}')
+
+for record in unpaywall_data:
+    collection.insert_one(record)
+
+paths = download_pdfs(unpaywall_data, folderPath, messages=True)
+[collection.update_one({"_id": path[0]}, {"$set": {"file_path": path[1]}}) for path in paths]
+corrupted = find_corrupted_pdfs(folderPath, messages=True)
+[os.remove(path) for path in corrupted]
+[collection.update_one({"file_path": file}, {"$unset": {"file_path": ""}}) for file in corrupted]
+

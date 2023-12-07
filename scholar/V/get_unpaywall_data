@@ -1,0 +1,20 @@
+import requests
+import time
+
+
+def get_unpaywall_data(query, email, is_open_access=True):
+    total = []
+    elements = 0
+    page = 1
+    while True:
+        url = f"https://api.unpaywall.org/v2/search?query={query}&is_oa={is_open_access}&page={page}&email={email}"
+        result = requests.get(url).json()['results']
+        num_elements = len(result)
+        if num_elements == 0:
+            break
+        for el in result:
+            total.append(el)
+        elements += num_elements
+        time.sleep(1)
+        page += 1
+    return total

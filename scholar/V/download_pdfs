@@ -1,0 +1,60 @@
+import requests
+import random
+import string
+import os
+
+
+def download_pdfs(records, folder_path, messages=False):
+    total_paths = []
+    total_elements = len(records)
+    successful_downloads = 0
+
+    def download_pdf(url, folder_path):
+        try:
+            pdf = requests.get(url)
+            if pdf.status_code == 200:
+                file_name = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10)) + ".pdf"
+                filepath = os.path.join(folder_path, file_name)
+                while os.path.exists(filepath):
+                    file_name = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10)) + ".pdf"
+                    filepath = os.path.join(folder_path, file_name)
+                with open(filepath, "wb") as pdf_file:
+                    pdf_file.write(pdf.content)
+                    if messages:
+                        print(f'{url} DOWNLOADED')
+                    return filepath
+            else:
+                if messages:
+                    print(f'\033[91m{url} NOT DOWNLOADED ({pdf.status_code})\033[0m')
+                return 0
+        except Exception as e:
+            if messages:
+                print(f"An error occurred: {e}")
+                print(f'\033[91m{url} NOT DOWNLOADED ({e})\033[0m')
+            return 0
+
+    for record in records:
+        _id = record['_id']
+        response = record['response']
+
+        oa_locations = response['oa_locations']
+        urls = []
+        urls_for_pdf = []
+        for location in oa_locations:
+            urls_for_pdf.append(location['url_for_pdf'])
+            urls.append(location['url'])
+            urls.append(location['url_for_landing_page'])
+        # Add all elements from urls to urls_for_pdf
+        urls_for_pdf.extend(urls)
+        # Remove None values from urls_for_pdf and remove duplicates
+        urls = list(set(x for x in urls_for_pdf if x is not None))
+
+        for url in urls:
+            file_path = download_pdf(url, folder_path)
+            if file_path != 0:
+                total_paths.append([str(_id), file_path])
+                successful_downloads += 1
+                break
+
+    print(f'Downloaded {successful_downloads}/{total_elements}')
+    return total_paths

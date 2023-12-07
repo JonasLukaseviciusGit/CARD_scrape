@@ -1,0 +1,31 @@
+import os
+import fitz  # PyMuPDF
+
+
+def find_corrupted_pdfs(folder_path, messages=False):
+    corrupted = []
+
+    def check_pdf_validity(pdf_path):
+        try:
+            with fitz.open(pdf_path) as pdf_document:
+                # Check the number of pages or any other property to ensure the file is valid
+                if pdf_document.page_count > 0:
+                    return True
+                else:
+                    return False
+        except:
+            pass
+
+    for filename in os.listdir(folder_path):
+        if filename.endswith(".pdf"):
+            pdf_path = os.path.join(folder_path, filename)
+            is_valid = check_pdf_validity(pdf_path)
+
+            if is_valid:
+                if messages:
+                    print(f"\033[92m{filename} is a valid PDF\033[0m")
+            else:
+                if messages:
+                    print(f"{filename} is not a valid PDF")
+                corrupted.append(pdf_path)
+    return corrupted

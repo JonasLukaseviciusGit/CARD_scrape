@@ -8,9 +8,9 @@ import passwords
 from selenium import webdriver
 import pygetwindow as gw
 import time
-import pyautogui
 from bson import ObjectId
 
+start_time = time.time()
 
 query = 'pain relief strategies'
 client = MongoClient('localhost', 27017)
@@ -22,11 +22,7 @@ folderPath = os.path.join(r'C:\Users\HP\Desktop\articles', collection_name)
 
 os.makedirs(folderPath) if not os.path.exists(folderPath) else None
 
-with open(r"C:\Users\HP\Desktop\articles\bad_urls.txt", 'r') as file:
-    bad_urls = [line.strip() for line in file.readlines()]
-print(bad_urls)
-
-unpaywall_data = get_unpaywall_data(query, passwords.email, is_open_access=True)[:10]
+unpaywall_data = get_unpaywall_data(query, passwords.email, is_open_access=True)
 print(f'Number of articles: {len(unpaywall_data)}')
 
 for record in unpaywall_data:
@@ -67,23 +63,22 @@ downloaded_manually = []
 first_download = True
 for urls in total_urls:
     for url in urls[1]:
-        if url not in bad_urls:
-            result = manual_downloading(driver, folderPath, url)
-            any(window.close() for window in gw.getWindowsWithTitle("Adobe Acrobat"))
-            if result[1] is not None:
-                downloaded_status = True
-                print('success')
-                print(result)
-                #downloaded_manually.append(result)
-                collection.update_one({"_id": ObjectId(urls[0])}, {"$set": {"file_path": result[1]}})
-                break
-            else:
-                print('fail')
+        result = manual_downloading(driver, folderPath, url)
+        any(window.close() for window in gw.getWindowsWithTitle("Adobe Acrobat"))
+        if result[1] is not None:
+            downloaded_status = True
+            print('success')
+            downloaded_manually.append(result)
+            collection.update_one({"_id": ObjectId(urls[0])}, {"$set": {"file_path": result[1]}})
+            break
+        else:
+            print('fail')
     print('------------------')
 driver.quit()
 print(f'Total URLs: {len(total_urls)}')
 print(f'Downloaded manually: {len(downloaded_manually)}')
 for el in downloaded_manually:
     print(el)
-
+end_time = time.time()
+print(f'Elapsed time: {end_time - start_time}')
 

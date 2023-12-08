@@ -41,19 +41,20 @@ def regular_download():
     [collection.update_one({"file_path": file}, {"$unset": {"file_path": ""}}) for file in corrupted]
 
 
-#regular_download()
+regular_download()
 
 unpaywall_data = list(collection.find({"file_path": {"$exists": False}}))[3:]
 total_urls = []
 for record in unpaywall_data:
     response = record['response']
     oa_locations = response['oa_locations']
+    _id = record['_id']
     urls = []
     for oa_location in oa_locations:
         urls.append(oa_location['url_for_pdf'])
         urls.append(oa_location['url'])
         urls.append(oa_location['url_for_landing_page'])
-    urls = list(set(x for x in urls if x is not None))
+    urls = [_id, list(set(x for x in urls if x is not None))]
     total_urls.append(urls)
 
 
@@ -65,14 +66,16 @@ time.sleep(2)
 downloaded_manually = []
 first_download = True
 for urls in total_urls:
-    for url in urls:
+    for url in urls[1]:
         if url not in bad_urls:
             result = manual_downloading(driver, folderPath, url)
             any(window.close() for window in gw.getWindowsWithTitle("Adobe Acrobat"))
             if result[1] is not None:
                 downloaded_status = True
                 print('success')
-                downloaded_manually.append(result)
+                print(result)
+                #downloaded_manually.append(result)
+                collection.update_one({"_id": ObjectId(urls[0])}, {"$set": {"file_path": result[1]}})
                 break
             else:
                 print('fail')

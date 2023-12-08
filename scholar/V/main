@@ -1,9 +1,15 @@
 from get_unpaywall_data import get_unpaywall_data
 from download_pdfs import download_pdfs
 from find_corrupted_pdfs import find_corrupted_pdfs
+from manual_downloading import manual_downloading
 import os
 from pymongo import MongoClient
 import passwords
+from selenium import webdriver
+import pygetwindow as gw
+import time
+import pyautogui
+from bson import ObjectId
 
 
 query = 'pain relief strategies'
@@ -22,9 +28,52 @@ print(f'Number of articles: {len(unpaywall_data)}')
 for record in unpaywall_data:
     collection.insert_one(record)
 
+unpaywall_data = unpaywall_data
 paths = download_pdfs(unpaywall_data, folderPath, messages=True)
-[collection.update_one({"_id": path[0]}, {"$set": {"file_path": path[1]}}) for path in paths]
+print(paths)
+[collection.update_one({"_id": ObjectId(path[0])}, {"$set": {"file_path": path[1]}}) for path in paths]
+
 corrupted = find_corrupted_pdfs(folderPath, messages=True)
 [os.remove(path) for path in corrupted]
 [collection.update_one({"file_path": file}, {"$unset": {"file_path": ""}}) for file in corrupted]
+
+
+total_urls = []
+for record in unpaywall_data:
+    response = record['response']
+    oa_locations = response['oa_locations']
+    urls = []
+    for oa_location in oa_locations:
+        urls.append(oa_location['url_for_pdf'])
+        urls.append(oa_location['url'])
+        urls.append(oa_location['url_for_landing_page'])
+    urls = list(set(x for x in urls if x is not None))
+    total_urls.append(urls)
+
+driver = webdriver.Chrome()
+driver.maximize_window()
+time.sleep(2)
+downloaded_manually = []
+first_download = True
+for urls in total_urls:
+    for url in urls:
+        result = manual_downloading(driver, folderPath, url)
+        any(window.close() for window in gw.getWindowsWithTitle("Adobe Acrobat"))
+        if result[1] is not None:
+            downloaded_status = True
+            print('success')
+            downloaded_manually.append(result)
+            if first_download:
+                pyautogui.moveTo(1755, 145, duration=0.5)
+                pyautogui.click()
+                first_download = False
+            break
+        else:
+            print('fail')
+    print('------------------')
+driver.quit()
+print(f'Total URLs: {len(total_urls)}')
+print(f'Downloaded manually: {len(downloaded_manually)}')
+for el in downloaded_manually:
+    print(el)
 

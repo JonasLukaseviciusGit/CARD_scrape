@@ -34,6 +34,7 @@ def manual_downloading(driver, folder_path, url,
         if screenshot == blue_message:
             pyautogui.moveTo(1768, 148, duration=mouse_movement_duration)
             pyautogui.click()
+            pyautogui.moveTo(500, 0, duration=mouse_movement_duration/2)
             time.sleep(click_wait)
         # If download button is there, continue normally
         if screenshot == download_button:

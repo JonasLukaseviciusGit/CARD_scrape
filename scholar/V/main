@@ -22,22 +22,28 @@ folderPath = os.path.join(r'C:\Users\HP\Desktop\articles', collection_name)
 
 os.makedirs(folderPath) if not os.path.exists(folderPath) else None
 
-unpaywall_data = get_unpaywall_data(query, passwords.email, is_open_access=True)
+with open(r"C:\Users\HP\Desktop\articles\bad_urls.txt", 'r') as file:
+    bad_urls = [line.strip() for line in file.readlines()]
+print(bad_urls)
+
+unpaywall_data = get_unpaywall_data(query, passwords.email, is_open_access=True)[:10]
 print(f'Number of articles: {len(unpaywall_data)}')
 
 for record in unpaywall_data:
     collection.insert_one(record)
 
-unpaywall_data = unpaywall_data
-paths = download_pdfs(unpaywall_data, folderPath, messages=True)
-print(paths)
-[collection.update_one({"_id": ObjectId(path[0])}, {"$set": {"file_path": path[1]}}) for path in paths]
 
-corrupted = find_corrupted_pdfs(folderPath, messages=True)
-[os.remove(path) for path in corrupted]
-[collection.update_one({"file_path": file}, {"$unset": {"file_path": ""}}) for file in corrupted]
+def regular_download():
+    paths = download_pdfs(unpaywall_data, folderPath, messages=True)
+    [collection.update_one({"_id": ObjectId(path[0])}, {"$set": {"file_path": path[1]}}) for path in paths]
+    corrupted = find_corrupted_pdfs(folderPath, messages=True)
+    [os.remove(path) for path in corrupted]
+    [collection.update_one({"file_path": file}, {"$unset": {"file_path": ""}}) for file in corrupted]
 
 
+#regular_download()
+
+unpaywall_data = list(collection.find({"file_path": {"$exists": False}}))[3:]
 total_urls = []
 for record in unpaywall_data:
     response = record['response']
@@ -50,30 +56,31 @@ for record in unpaywall_data:
     urls = list(set(x for x in urls if x is not None))
     total_urls.append(urls)
 
+
 driver = webdriver.Chrome()
+driver.set_page_load_timeout(5)
 driver.maximize_window()
+
 time.sleep(2)
 downloaded_manually = []
 first_download = True
 for urls in total_urls:
     for url in urls:
-        result = manual_downloading(driver, folderPath, url)
-        any(window.close() for window in gw.getWindowsWithTitle("Adobe Acrobat"))
-        if result[1] is not None:
-            downloaded_status = True
-            print('success')
-            downloaded_manually.append(result)
-            if first_download:
-                pyautogui.moveTo(1755, 145, duration=0.5)
-                pyautogui.click()
-                first_download = False
-            break
-        else:
-            print('fail')
+        if url not in bad_urls:
+            result = manual_downloading(driver, folderPath, url)
+            any(window.close() for window in gw.getWindowsWithTitle("Adobe Acrobat"))
+            if result[1] is not None:
+                downloaded_status = True
+                print('success')
+                downloaded_manually.append(result)
+                break
+            else:
+                print('fail')
     print('------------------')
 driver.quit()
 print(f'Total URLs: {len(total_urls)}')
 print(f'Downloaded manually: {len(downloaded_manually)}')
 for el in downloaded_manually:
     print(el)
+
 

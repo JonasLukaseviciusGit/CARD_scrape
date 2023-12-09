@@ -8,7 +8,6 @@ db = client['Articles1']
 
 email = passwords.email
 
-
 def get_unpaywall_data(query, email, is_open_access=True):
     collection_name = query.replace(' ', '_')
     collection = db[collection_name]

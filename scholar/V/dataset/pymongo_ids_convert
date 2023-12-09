@@ -1,0 +1,33 @@
+from pymongo import MongoClient
+import requests
+import passwords
+import json
+
+client = MongoClient('localhost', 27017)
+db = client['UnpaywallArticles']
+collection_name = "pain_management"
+collection = db[collection_name]
+
+records = collection.find({})
+dois = []
+for record in records:
+    doi = record['response']['doi']
+    print(doi)
+    dois.append(doi)
+print('')
+
+sublists = [dois[i:i + 200] for i in range(0, len(dois), 200)]
+
+result = []
+for sublist in sublists:
+    pmc_ids = ','.join(sublist)
+    url = f'https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/?email={passwords.email}&ids={pmc_ids}&format=json'
+    response = requests.get(url).json()['records']
+    result.append(response)
+
+for el in result:
+    print(el)
+
+# save result as json file:
+with open(r"C:\Users\HP\Desktop\b1\dois.json", 'w') as f:
+    json.dump(result, f, indent=4)

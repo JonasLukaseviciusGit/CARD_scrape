@@ -1,0 +1,29 @@
+import requests
+import xml.etree.ElementTree as ET
+
+
+def get_tgz_and_pdf(pmcid):
+    url = f'https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmcid}'
+
+    response = requests.get(url)
+    xml_root = ET.fromstring(response.text)
+
+    # Extract tgz and pdf links
+    tgz_link = None
+    pdf_link = None
+
+    records = xml_root.find('.//records')
+    if records is not None:
+        record = records.find('.//record')
+        if record is not None:
+            tgz_link_element = record.find('.//link[@format="tgz"]')
+            pdf_link_element = record.find('.//link[@format="pdf"]')
+
+            if tgz_link_element is not None:
+                tgz_link = tgz_link_element.get('href')
+
+            if pdf_link_element is not None:
+                pdf_link = pdf_link_element.get('href')
+
+    result_dict = {'tgz': tgz_link, 'pdf': pdf_link}
+    return result_dict

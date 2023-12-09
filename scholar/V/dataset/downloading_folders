@@ -1,0 +1,45 @@
+from pymongo import MongoClient
+from ftplib import FTP
+import os
+from download_tar import download_tar
+from urllib.parse import urlparse
+import time
+
+client = MongoClient('localhost', 27017)
+db = client['Articles1']
+
+url = "ftp.ncbi.nlm.nih.gov"
+
+parent_folder = r"C:\Users\HP\Desktop\articles1"
+
+ftp = FTP(url)
+ftp.login()
+
+ftp = FTP(url)
+ftp.login()
+
+collection_names = db.list_collection_names()
+
+for collection_name in collection_names:
+    print(collection_name)
+    folder_path = os.path.join(parent_folder, collection_name)
+    os.makedirs(folder_path) if not os.path.exists(folder_path) else None
+    collection = db[collection_name]
+    records = collection.find({
+        "tgz_pdf_links.tgz": {"$ne": None},
+        "path_to_folder": {"$exists": False}
+    })
+    i = 0
+    for record in records:
+        _id = record['_id']
+        url_path = urlparse(record['tgz_pdf_links']['tgz']).path
+        try:
+            path = download_tar(ftp, folder_path, url_path)
+            collection.update_one({"_id": _id}, {"$set": {"path_to_folder": path}})
+        except Exception as e:
+            print(e)
+        i += 1
+        print(i)
+        time.sleep(1)
+    print('\033[91m' + '-' * 50 + '\033[0m')
+

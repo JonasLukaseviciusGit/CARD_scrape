@@ -1,0 +1,13 @@
+import requests
+import xml.etree.ElementTree as ET
+from xml.dom import minidom
+
+pmcid = 'PMC5334499'
+url = f'https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmcid}'
+
+response = requests.get(url)
+xml_root = ET.fromstring(response.text)
+
+# Use 'minidom' to format the XML content with indentation
+formatted_xml = minidom.parseString(ET.tostring(xml_root)).toprettyxml(indent="  ")
+print(formatted_xml)

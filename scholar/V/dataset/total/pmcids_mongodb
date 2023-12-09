@@ -16,32 +16,31 @@ def add_pmcid(collection):
 
     records = db[collection].find({})
 
-    _ids = []
+    data = []
     dois = []
     for record in records:
-        _ids.append(record['_id'])
         dois.append(record['response']['doi'])
+        data.append([record['_id'], record['response']['doi']])
 
     sublists = [dois[i:i + 200] for i in range(0, len(dois), 200)]
 
-    pmcids = []
+    new_data = []
     for sublist in sublists:
         dois_joined = ','.join(sublist)
         url = f'https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/?email={email}&ids={dois_joined}&format=json'
         response = requests.get(url).json()['records']
-        for result in response:
-            if 'pmcid' in result:
-                pmcids.append(result['pmcid'])
+        for article in response:
+            if 'pmcid' in article:
+                new_data.append([article['doi'], article['pmcid']])
             else:
-                pmcids.append(None)
-    print(len(pmcids))
-    print('')
+                new_data.append([article['doi'], None])
 
-    for i in range(len(list(records))):
-        _id = _ids[i-1]
-        pmcid = pmcids[i-1]
-        db[collection].update_one({"_id": _id}, {"$set": {"pmcid": pmcid}})
+    for element in new_data:
+        doi = element[0]
+        pmcid = element[1]
+        db[collection].update_one({"response.doi": doi}, {"$set": {"pmcid": pmcid}})
 
 
 for collection in collections:
     add_pmcid(collection)
+    print('\033[91m' + '-' * 50 + '\033[0m')

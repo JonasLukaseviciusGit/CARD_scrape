@@ -1,0 +1,9 @@
+import requests
+
+pmc_ids = ['PMC3531190', 'PMC3245039']
+
+pmc_ids = ','.join(pmc_ids)
+url = f'https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/?&ids={pmc_ids}&format=json'
+
+response = requests.get(url).json()
+print(response)

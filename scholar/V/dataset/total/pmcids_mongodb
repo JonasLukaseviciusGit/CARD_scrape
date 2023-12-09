@@ -1,7 +1,6 @@
 import requests
 from pymongo import MongoClient
 import passwords
-import json
 
 email = passwords.email
 
@@ -10,42 +9,39 @@ db = client['Articles1']
 
 collections = db.list_collection_names()
 print(collections)
-collection = collections[0]
 
-print(collection)
 
-records = db[collection].find({})
+def add_pmcid(collection):
+    print(collection)
 
-_ids = []
-dois = []
-for record in records:
-    _ids.append(record['_id'])
-    dois.append(record['response']['doi'])
+    records = db[collection].find({})
 
-sublists = [dois[i:i + 200] for i in range(0, len(dois), 200)]
+    _ids = []
+    dois = []
+    for record in records:
+        _ids.append(record['_id'])
+        dois.append(record['response']['doi'])
 
-pmcids = []
-for sublist in sublists:
-    dois_joined = ','.join(sublist)
-    url = f'https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/?email={email}&ids={dois_joined}&format=json'
-    response = requests.get(url).json()['records']
-    for result in response:
-        if 'pmcid' in result:
-            pmcids.append(result['pmcid'])
-        else:
-            pmcids.append(None)
+    sublists = [dois[i:i + 200] for i in range(0, len(dois), 200)]
 
-with open(r"C:\Users\HP\Desktop\b1\dois-1.json", "w") as file:
-    json.dump(pmcids, file)
+    pmcids = []
+    for sublist in sublists:
+        dois_joined = ','.join(sublist)
+        url = f'https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/?email={email}&ids={dois_joined}&format=json'
+        response = requests.get(url).json()['records']
+        for result in response:
+            if 'pmcid' in result:
+                pmcids.append(result['pmcid'])
+            else:
+                pmcids.append(None)
+    print(len(pmcids))
+    print('')
 
-for pmcid in pmcids:
-    print(pmcid)
-print('')
-print(len(pmcids))
-print('')
+    for i in range(len(list(records))):
+        _id = _ids[i-1]
+        pmcid = pmcids[i-1]
+        db[collection].update_one({"_id": _id}, {"$set": {"pmcid": pmcid}})
 
-for i in range(len(list(records))):
-    _id = _ids[i-1]
-    pmcid = pmcids[i-1]
-    db[collection].update_one({"_id": _id}, {"$set": {"pmcid": pmcid}})
-print('done')
+
+for collection in collections:
+    add_pmcid(collection)

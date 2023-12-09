@@ -1,0 +1,22 @@
+from pymongo import MongoClient
+from get_tgz_and_pdf import get_tgz_and_pdf
+import time
+
+client = MongoClient('localhost', 27017)
+db = client['Articles1']
+
+collection_names = db.list_collection_names()
+
+for collection_name in collection_names:
+    print('collection_name:', collection_name)
+    collection = db[collection_name]
+    records = collection.find({"pmcid": {"$ne": None}})
+    i = 0
+    for record in records:
+        links = get_tgz_and_pdf(record['pmcid'])
+        collection.update_one({"_id": record['_id']}, {"$set": {"tgz_pdf_links": links}})
+        i += 1
+        print(i)
+        time.sleep(1)
+    print(f'Number of records updated: {i}')
+    print('\033[91m' + '-' * 50 + '\033[0m')

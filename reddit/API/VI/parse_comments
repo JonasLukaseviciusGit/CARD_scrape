@@ -1,0 +1,64 @@
+import praw
+import passwords
+import json
+from pymongo import MongoClient
+from get_submission_ids import get_submission_ids
+import pprint
+
+# connect to mongodb
+client = MongoClient('localhost', 27017)
+db = client['reddit']
+collection = db['latest_1000']
+
+client_id = passwords.client_id
+client_secret = passwords.client_secret
+user_agent = passwords.user_agent
+username = passwords.username
+password = passwords.password
+
+# Initialize the Reddit API client
+reddit = praw.Reddit(
+    client_id=client_id,
+    client_secret=client_secret,
+    user_agent=user_agent,
+    username=username,
+    password=password
+)
+
+
+def is_valid_comment(comment):
+    return isinstance(comment, praw.models.Comment) or isinstance(comment, praw.models.MoreComments)
+
+
+def parse_comment(comment):
+    if is_valid_comment(comment):
+        keys = set(vars(comment).keys())
+        comment_data = {
+            'comment_id': comment.id,
+            'user': comment.author.name if comment.author else None,
+            'commented_at': comment.created_utc,
+            'votes': comment.score,
+            'text': comment.body,
+            'replies': [],
+            'other_data': {key: getattr(comment, key) for key in keys - {'comment_id', 'user', 'commented_at',
+                                                                            'votes', 'text', 'replies'}}
+        }
+        if isinstance(comment, praw.models.Comment):
+            for reply in comment.replies:
+                reply_data = parse_comment(reply)
+                if reply_data:
+                    comment_data['replies'].append(reply_data)
+        return comment_data
+    else:
+        return None
+
+
+submission = reddit.submission('18fsgcq')
+submission.comments.replace_more(limit=None)
+comments = []
+for comment in submission.comments.list():
+    comment_data = parse_comment(comment)
+    if comment_data:
+        comments.append(comment_data)
+
+pprint.pprint(comments)

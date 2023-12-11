@@ -1,0 +1,80 @@
+import praw
+import passwords
+import json
+from pymongo import MongoClient
+from get_submission_ids import get_submission_ids
+from parse_comments import parse_comments
+import pprint
+
+# connect to mongodb
+client = MongoClient('localhost', 27017)
+db = client['reddit']
+collection = db['latest_1000']
+
+client_id = passwords.client_id
+client_secret = passwords.client_secret
+user_agent = passwords.user_agent
+username = passwords.username
+password = passwords.password
+
+# Initialize the Reddit API client
+reddit = praw.Reddit(
+    client_id=client_id,
+    client_secret=client_secret,
+    user_agent=user_agent,
+    username=username,
+    password=password
+)
+
+
+def parse_submission(reddit, id='18fsgcq'):
+    submission = reddit.submission(id)
+    title = submission.title
+    submission_keys = set(vars(submission).keys())
+    main_keys = {'title, author, created_utc, selftext, ups, downs, score'}
+    level_1_keys = {'author_flair_text', 'author_fullname', 'name', 'over_18', 'permalink', 'pinned', 'upvote_ratio', 'view_count', 'visited'}
+    level_2_keys = submission_keys - main_keys - level_1_keys
+
+    new_dict = {
+        'title': submission.title,
+        'author': submission.author,
+        'created_utc': submission.created_utc,
+        'text': submission.selftext,
+        'ups': submission.ups,
+        'downs': submission.downs,
+        'score': submission.score,
+        'other_data': {
+            'LEVEL_1': {key: getattr(submission, key) for key in submission_keys - main_keys - level_2_keys},
+            'LEVEL_2': {key: getattr(submission, key) for key in level_2_keys}},
+        'comments': parse_comments(submission)}  # Corrected this line
+    return new_dict
+
+
+def clean_dict(d):
+    """
+    Recursively remove keys with class instances from the dictionary.
+    """
+    if isinstance(d, dict):
+        # Iterate over a copy of keys to avoid runtime error due to dictionary size changing
+        for key in list(d.keys()):
+            if hasattr(d[key], '__dict__'):
+                # Exclude keys with class instances
+                del d[key]
+            else:
+                # Recursively clean nested dictionaries
+                clean_dict(d[key])
+    elif isinstance(d, list):
+        # Recursively clean dictionaries within the list
+        for item in d:
+            clean_dict(item)
+
+
+submission_ids = get_submission_ids(reddit)
+for submission_id in submission_ids:
+    print(submission_id)
+    submission = parse_submission(reddit, submission_id)
+
+    # Clean up the submission dictionary
+    clean_dict(submission)
+
+    collection.insert_one(submission)

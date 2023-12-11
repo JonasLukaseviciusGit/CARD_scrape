@@ -1,0 +1,44 @@
+import praw
+import passwords
+import json
+from pymongo import MongoClient
+from get_submission_ids import get_submission_ids
+import pprint
+
+# connect to mongodb
+client = MongoClient('localhost', 27017)
+db = client['reddit']
+collection = db['latest_1000']
+
+client_id = passwords.client_id
+client_secret = passwords.client_secret
+user_agent = passwords.user_agent
+username = passwords.username
+password = passwords.password
+
+# Initialize the Reddit API client
+reddit = praw.Reddit(
+    client_id=client_id,
+    client_secret=client_secret,
+    user_agent=user_agent,
+    username=username,
+    password=password
+)
+
+#submission_ids = get_submission_ids(reddit, count=10)
+
+submission = reddit.submission('18fsgcq')
+title = submission.title
+submission_keys = set(vars(submission).keys())
+new_dict = {
+    'title': submission.title,
+    'author': submission.author,
+    'created_utc': submission.created_utc,
+    'text': submission.selftext,
+    'ups': submission.ups,
+    'downs': submission.downs,
+    'score': submission.score,
+    'other_data': {key: getattr(submission, key) for key in submission_keys - {'title', 'author', 'created_utc',
+                                                                               'selftext', 'ups', 'downs', 'score'}}
+}
+pprint.pprint(new_dict)

@@ -26,9 +26,10 @@ def parse_comments(submission):
             return comment_data
         else:
             return None
+
     submission.comments.replace_more(limit=None)
     comments = []
-    for comment in submission.comments.list():
+    for comment in submission.comments._comments:
         comment_data = parse_comment(comment)
         if comment_data:
             comments.append(comment_data)

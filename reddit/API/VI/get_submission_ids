@@ -1,0 +1,19 @@
+import praw
+
+
+def get_submission_ids(reddit, subreddit='AskDocs', count=10):
+
+    # Specify the subreddit you want to scrape
+    subreddit_name = subreddit
+
+    # Limit the number of posts to retrieve (up to 1000)
+    post_limit = count
+
+    # Retrieve the latest posts from the subreddit
+    subreddit = reddit.subreddit(subreddit_name)
+
+    ids = []
+    for submission in subreddit.new(limit=post_limit):
+        ids.append(submission.id)
+
+    return ids

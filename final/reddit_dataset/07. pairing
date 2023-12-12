@@ -1,0 +1,41 @@
+import pickle
+import json
+from tqdm import tqdm
+
+c_path = r"C:\Users\HP\Desktop\datasets-cleaned\_crude\comments-grouped.pkl"
+s_path = r"C:\Users\HP\Desktop\datasets-cleaned\_crude\submissions-list.pkl"
+
+with open(c_path, 'rb') as f:
+    comments = pickle.load(f)
+
+with open(s_path, 'rb') as f:
+    submissions = pickle.load(f)
+
+total = []
+
+exceptions_count = 0
+fine = 0
+for submission in tqdm(submissions, desc="Processing submissions", unit="submission"):
+    aim = submission[2]
+
+    index = submission[2][:2]
+    aimList = []
+    try:
+        c_sublist = comments[index]
+
+        for element in c_sublist:
+            a, b, c, d, e = element
+            if d == aim:
+                aimList.append(element)
+        fine += 1
+    except:
+        exceptions_count += 1
+    total.append([submission, aimList])
+
+t_path = r"C:\Users\HP\Desktop\datasets-cleaned\_crude\paired.json"
+
+with open(t_path, 'w') as f:
+    json.dump(total, f)
+
+print(f'Fine: {fine}; Exceptions: {exceptions_count}')
+print('Done')

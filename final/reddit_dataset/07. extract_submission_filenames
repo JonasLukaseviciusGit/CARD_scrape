@@ -15,7 +15,7 @@ for filename in tqdm(os.listdir(folder_path), desc="Processing Files"):
         data = json.load(f)
 
     _id = data["id"]
-    the_list.append([_id])
+    the_list.append([[file_name_without_extension, _id], []])
 
 # Save the_list to a JSON file
 with open(end_path, "w", encoding="utf-8") as f:

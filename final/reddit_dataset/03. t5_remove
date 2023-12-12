@@ -1,0 +1,30 @@
+import json
+import os
+from tqdm import tqdm
+
+path = r"C:\Users\HP\Desktop\datasets-cleaned\_crude\comments"
+
+
+def modify_parent_ids(path):
+    exceptions_count = 0
+    for filename in tqdm(os.listdir(path), desc='Processing files'):
+        try:
+            file_path = os.path.join(path, filename)
+
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+
+            if '_' in data['parent_id']:
+                data['parent_id'] = data['parent_id'][data['parent_id'].index('_') + 1:]
+
+            # Write the modified data back to the same file
+            with open(file_path, 'w') as f:
+                json.dump(data, f, indent=4)
+        except Exception as e:
+            print(e)
+            exceptions_count += 1
+    return exceptions_count
+
+
+exceptions_count = modify_parent_ids(path)
+print(f'Exceptions count: {exceptions_count}')

@@ -3,7 +3,7 @@ import pickle
 import os
 
 folder = r"C:\Users\HP\Desktop\datasets-cleaned\_crude\submissions"
-save_path = r"C:\Users\HP\Desktop\datasets-cleaned\_crude\submissions-indexed.pickle"
+save_path = r"C:\Users\HP\Desktop\datasets-cleaned\_crude\submissions-list.pkl"
 
 total = []
 filenames = os.listdir(folder)

@@ -1,0 +1,40 @@
+import pickle
+import datetime
+from tqdm import tqdm
+
+# Specify the file path
+path_comments = r"C:\Users\HP\Desktop\datasets-cleaned\_crude\_indexing.pkl"
+
+# Load comment list
+try:
+    with open(path_comments, 'rb') as file:
+        comments = pickle.load(file)
+        print("Comment list:", comments[:10])
+except Exception as e:
+    print(e)
+
+print(datetime.datetime.now())
+def group(lst):
+    grouped = {}
+
+    for sublist in lst:
+        fourth_element = str(sublist[3])
+        key = fourth_element[0:2].lower()
+
+        if key not in grouped:
+            grouped[key] = []
+
+        grouped[key].append(sublist)
+
+    return grouped
+
+
+grouped = group(comments)
+print(len(grouped))
+print(datetime.datetime.now())
+
+save_path = r"C:\Users\HP\Desktop\datasets-cleaned\_crude\_indexing-grouped.pkl"
+with open(save_path, 'wb') as file:
+    pickle.dump(grouped, file)
+
+print("Saved to", save_path)

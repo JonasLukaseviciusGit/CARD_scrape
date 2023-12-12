@@ -1,0 +1,37 @@
+import json
+from tqdm import tqdm  # Import tqdm for the progress bar
+
+path_pairs = r"C:\Users\HP\Desktop\datasets-cleaned\_crude\paired.json"
+
+path_submissions = r"C:\Users\HP\Desktop\datasets-cleaned\_crude\submissions"
+path_comments = r"C:\Users\HP\Desktop\datasets-cleaned\_crude\comments"
+
+path_result = r"C:\Users\HP\Desktop\datasets-cleaned\_crude\PostFoldersContainer"
+
+with open(path_pairs, 'r') as f:
+    pairs = json.load(f)
+
+# Use tqdm to create a progress bar for the loop
+for pair in tqdm(pairs, desc="Processing pairs"):
+    submission_index = str(pair[0][0]) + '_' + str(pair[0][1])
+    submission_path = path_submissions + '\\' + submission_index + '.json'
+    result_path = path_result + '\\' + submission_index + '.json'
+    try:
+        with open(submission_path, 'r') as f:
+            submission = json.load(f)
+        comments = []
+        for comment in pair[1]:
+            comment_index = str(comment[0]) + '_' + str(comment[1])
+            comment_path = path_comments + '\\' + comment_index + '.json'
+            try:
+                with open(comment_path, 'r') as f:
+                    comment = json.load(f)
+            except FileNotFoundError:
+                comment = [f'not found: {comment_index}']
+            comments.append(comment)
+        result = {'submission': submission, 'comments': comments}
+        with open(result_path, 'w') as f:
+            json.dump(result, f)
+    except FileNotFoundError:
+        with open(result_path, 'w') as f:
+            json.dump([f'not found: {submission_index}'], f)

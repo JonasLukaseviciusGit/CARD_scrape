@@ -1,1 +1,535 @@
+import os
+import json
+from tqdm import tqdm
+import pickle
+import datetime
+from pymongo import MongoClient
+import time
+import shutil
 
+folder = r"C:\Users\HP\Desktop\final\911"
+
+client = MongoClient('localhost', 27017)
+db = client['reddit_911']
+collection = db['data']
+
+start_time = time.time()
+"""
+------------------------------------------------------------------------------------------------------------------------
+STEP 1: Making clean datasets
+
+1. Getting the path to folder containing submissions and comments NDJSON files
+2. Creating a new folder within, called datasets-cleaned
+3. Splitting the submissions and comments NDJSON files into smaller files of 10000 elements each
+------------------------------------------------------------------------------------------------------------------------
+"""
+
+
+def step1():
+    paths = [os.path.join(folder, file) for file in os.listdir(folder)]
+    if 'comments' in paths[0]:
+        input_comments = paths[0]
+        input_submissions = paths[1]
+    else:
+        input_comments = paths[1]
+        input_submissions = paths[0]
+
+    # create new folder within, called datasets-cleaned
+    output_directory = fr"{folder}\datasets-cleaned"
+
+    # Create the output directory if it doesn't exist
+    os.makedirs(output_directory, exist_ok=True)
+
+    def splitting(input_file, output_directory):
+        # Initialize counters
+        file_counter = 1
+        element_counter = 0
+        # Open the input NDJSON file with the appropriate encoding
+        print('Loading: ' + input_file)
+        with open(input_file, 'r', encoding='utf-8') as ndjson_file:
+            current_json_data = []
+            print('Loaded, processing...')
+
+            for line in ndjson_file:
+                # Parse each line as a JSON object
+                data = json.loads(line)
+                current_json_data.append(data)
+                element_counter += 1
+
+                # Check if we've reached 10000 elements
+                if element_counter == 10000:
+                    # Generate the output file path
+                    output_file_path = os.path.join(output_directory, f'{file_counter:03d}.json')
+
+                    # Write the current JSON data to the output file
+                    with open(output_file_path, 'w', encoding='utf-8') as output_file:
+                        json.dump(current_json_data, output_file)
+
+                    # Reset counters and prepare for the next batch of 1000 elements
+                    current_json_data = []
+                    element_counter = 0
+                    file_counter += 1
+
+            # If there are remaining elements, write them to the last file
+            if current_json_data:
+                output_file_path = os.path.join(output_directory, f'{file_counter:03d}.json')
+                with open(output_file_path, 'w', encoding='utf-8') as output_file:
+                    json.dump(current_json_data, output_file)
+            print('Saved to ' + output_directory)
+            return output_directory
+
+
+    path_submissions = os.path.join(output_directory, 'submissions')
+    os.makedirs(path_submissions, exist_ok=True)
+    path_comments = os.path.join(output_directory, 'comments')
+    os.makedirs(path_comments, exist_ok=True)
+
+    submissions_directory = splitting(input_submissions, path_submissions)
+    print('Submissions done')
+    print('')
+    comments_directory = splitting(input_comments, path_comments)
+    print('Comments done')
+    print('')
+    print('All done')
+
+
+step1()
+print('\033[91m' + 'STEP 1 done' + '\033[0m')
+print('\033[91m' + '-' * 100 + '\033[0m')
+
+submissions_folder = fr"{folder}\datasets-cleaned\submissions"
+comments_folder = fr"{folder}\datasets-cleaned\comments"
+
+"""
+------------------------------------------------------------------------------------------------------------------------
+STEP 2: Splitting datasets-cleaned into smaller files of 10000 elements each
+------------------------------------------------------------------------------------------------------------------------
+"""
+
+comments_container = fr"{folder}\_crude\comments"
+submissions_container = fr"{folder}\_crude\submissions"
+
+os.makedirs(comments_container, exist_ok=True)
+os.makedirs(submissions_container, exist_ok=True)
+
+def step2():
+    def split(folder, container):
+        a = 1
+        total_a = len(os.listdir(folder))  # Total number of iterations for the outer loop
+        # Outer loop progress bar
+        with tqdm(total=total_a, desc="Processing") as outer_pbar:
+            while a <= total_a:
+                index = str(a).zfill(3)
+                path = folder + "\\" + index + ".json"
+
+                with open(path, "r") as f:
+                    content = json.load(f)
+
+                b = 0
+                total = len(content)
+
+                while b < total - 1:
+                    container_path = container + "\\" + index + "_" + str(b) + ".json"
+                    with open(container_path, "w") as f:
+                        json.dump(content[b], f)
+                    b += 1
+
+                a += 1
+                outer_pbar.update(1)
+
+        print("Done")
+
+
+    split(comments_folder, comments_container)
+    split(submissions_folder, submissions_container)
+
+
+step2()
+print('\033[91m' + 'STEP 2 done' + '\033[0m')
+print('\033[91m' + '-' * 100 + '\033[0m')
+
+# Deleting datasets_cleaned folder
+shutil.rmtree(fr"{folder}\datasets-cleaned")
+
+"""
+------------------------------------------------------------------------------------------------------------------------
+STEP 3: removing indices from parent_id in comments, so it could be matched with submissions (t5_)
+------------------------------------------------------------------------------------------------------------------------
+"""
+
+
+def step3(path):
+    exceptions_count = 0
+    for filename in tqdm(os.listdir(path), desc='Processing files'):
+        try:
+            file_path = os.path.join(path, filename)
+
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+
+            if '_' in data['parent_id']:
+                data['parent_id'] = data['parent_id'][data['parent_id'].index('_') + 1:]
+
+            # Write the modified data back to the same file
+            with open(file_path, 'w') as f:
+                json.dump(data, f, indent=4)
+        except Exception as e:
+            print(e)
+            exceptions_count += 1
+    print(f'Exceptions count: {exceptions_count}')
+
+
+step3(comments_container)
+print('\033[91m' + 'STEP 3 done' + '\033[0m')
+print('\033[91m' + '-' * 100 + '\033[0m')
+
+"""
+------------------------------------------------------------------------------------------------------------------------
+STEP 4: indexing comments
+------------------------------------------------------------------------------------------------------------------------
+"""
+
+indexing_file_path = fr"{folder}\_crude\_indexing.pkl"
+
+def step4(folder_path, indexing_file_path):
+    # Create an empty list for indexing
+    indexing = []
+
+    exceptions_count = 0
+    # Iterate through each file in the folder
+    for filename in tqdm(os.listdir(folder_path), desc="Processing files"):
+        # Check if the file is a JSON file
+        try:
+            # Get the file path
+            file_path = os.path.join(folder_path, filename)
+
+            # Extract filename without extension
+            file_name_without_extension = os.path.splitext(filename)[0]
+
+            # Split filename at underscore
+            a, b = file_name_without_extension.split("_")
+
+            # Read the JSON file
+            with open(file_path, "r", encoding="utf-8") as file:
+                # Load JSON data
+                data = json.load(file)
+
+                # Get the value of 'parent_id' key
+                _id = data.get("id", None)
+                parent_id = data.get("parent_id", None)
+                link_id = data.get("link_id", None)
+
+                sublist = [a, b, _id, parent_id, link_id]
+
+                # Append [filename, parent_id] to the indexing list
+                indexing.append(sublist)
+        except Exception as e:
+            print("Error:", e)
+            exceptions_count += 1
+
+    # Save the indexing list to a pickle file
+    with open(indexing_file_path, "wb") as indexing_file:
+        pickle.dump(indexing, indexing_file)
+
+    print("Indexing completed. Indexing list saved to", indexing_file_path)
+    print("Exceptions count:", exceptions_count)
+
+
+step4(comments_container, indexing_file_path)
+print('\033[91m' + 'STEP 4 done' + '\033[0m')
+print('\033[91m' + '-' * 100 + '\033[0m')
+
+"""
+------------------------------------------------------------------------------------------------------------------------
+STEP 5:
+------------------------------------------------------------------------------------------------------------------------
+"""
+
+
+def step5(path_comments, save_path):
+    # Load comment list
+    try:
+        with open(path_comments, 'rb') as file:
+            comments = pickle.load(file)
+    except Exception as e:
+        print(e)
+
+    print(datetime.datetime.now())
+    def group(lst):
+        grouped = {}
+
+        for sublist in lst:
+            fourth_element = str(sublist[3])
+            key = fourth_element[0:2].lower()
+
+            if key not in grouped:
+                grouped[key] = []
+
+            grouped[key].append(sublist)
+
+        return grouped
+
+    grouped = group(comments)
+    print(datetime.datetime.now())
+
+    with open(save_path, 'wb') as file:
+        pickle.dump(grouped, file)
+
+    print("Saved to", save_path)
+
+
+grouped = fr'{folder}\_crude\_grouped.pkl'
+step5(indexing_file_path, grouped)
+print('\033[91m' + 'STEP 5 done' + '\033[0m')
+print('\033[91m' + '-' * 100 + '\033[0m')
+
+"""
+------------------------------------------------------------------------------------------------------------------------
+STEP 6: turning submissions into a pickle file of indices
+------------------------------------------------------------------------------------------------------------------------
+"""
+
+
+def step6(folder, save_path):
+    total = []
+    filenames = os.listdir(folder)
+
+    # Use tqdm to track progress
+    for filename in tqdm(filenames, desc="Processing files", unit="file"):
+        with open(os.path.join(folder, filename), "r") as f:
+            filename = os.path.splitext(os.path.basename(filename))[0]
+            a, b = filename.split('_')
+            data = json.load(f)
+            _id = data['id']
+            total.append([a, b, _id])
+
+    with open(save_path, "wb") as f:
+        pickle.dump(total, f)
+
+
+submissions_indices = fr'{folder}\_crude\_submissions-list.pkl'
+step6(submissions_container, submissions_indices)
+print('\033[91m' + 'STEP 6 done' + '\033[0m')
+print('\033[91m' + '-' * 100 + '\033[0m')
+
+"""
+------------------------------------------------------------------------------------------------------------------------
+STEP 7:
+------------------------------------------------------------------------------------------------------------------------
+"""
+
+paired = fr'{folder}\_crude\paired.json'
+
+
+def step7(c_path, s_path, t_path):
+    with open(c_path, 'rb') as f:
+        comments = pickle.load(f)
+
+    with open(s_path, 'rb') as f:
+        submissions = pickle.load(f)
+
+    total = []
+
+    exceptions_count = 0
+    fine = 0
+    for submission in tqdm(submissions, desc="Processing submissions", unit="submission"):
+        aim = submission[2]
+
+        index = submission[2][:2]
+        aimList = []
+        try:
+            c_sublist = comments[index]
+
+            for element in c_sublist:
+                a, b, c, d, e = element
+                if d == aim:
+                    aimList.append(element)
+            fine += 1
+        except:
+            exceptions_count += 1
+        total.append([submission, aimList])
+
+    with open(t_path, 'w') as f:
+        json.dump(total, f)
+
+    print(f'Fine: {fine}; Exceptions: {exceptions_count}')
+    print('Done')
+
+
+step7(grouped, submissions_indices, paired)
+print('\033[91m' + 'STEP 7 done' + '\033[0m')
+print('\033[91m' + '-' * 100 + '\033[0m')
+
+"""
+------------------------------------------------------------------------------------------------------------------------
+STEP 8:
+------------------------------------------------------------------------------------------------------------------------
+"""
+
+
+def step8(path_pairs, path_submissions, path_comments, path_result):
+    os.makedirs(path_result, exist_ok=True)
+    with open(path_pairs, 'r') as f:
+        pairs = json.load(f)
+
+    # Use tqdm to create a progress bar for the loop
+    for pair in tqdm(pairs, desc="Processing pairs"):
+        submission_index = str(pair[0][0]) + '_' + str(pair[0][1])
+        submission_path = path_submissions + '\\' + submission_index + '.json'
+        result_path = path_result + '\\' + submission_index + '.json'
+        try:
+            with open(submission_path, 'r') as f:
+                submission = json.load(f)
+            comments = []
+            for comment in pair[1]:
+                comment_index = str(comment[0]) + '_' + str(comment[1])
+                comment_path = path_comments + '\\' + comment_index + '.json'
+                try:
+                    with open(comment_path, 'r') as f:
+                        comment = json.load(f)
+                except FileNotFoundError:
+                    comment = [f'not found: {comment_index}']
+                comments.append(comment)
+            result = {'submission': submission, 'comments': comments}
+            with open(result_path, 'w') as f:
+                json.dump(result, f)
+        except FileNotFoundError:
+            with open(result_path, 'w') as f:
+                json.dump([f'not found: {submission_index}'], f)
+
+
+postfolderscontainer_path = fr'{folder}\_crude\PostFoldersContainer'
+step8(paired, submissions_container, comments_container, postfolderscontainer_path)
+print('\033[91m' + 'STEP 8 done' + '\033[0m')
+print('\033[91m' + '-' * 100 + '\033[0m')
+
+"""
+------------------------------------------------------------------------------------------------------------------------
+STEP 9:
+------------------------------------------------------------------------------------------------------------------------
+"""
+
+
+def step9(folder_path, output_file_path):
+    # Check if the folder path exists
+    if os.path.exists(folder_path):
+        # Initialize a list to store filenames without extensions
+        filenames_without_extension = []
+
+        # Get the total number of files for the progress bar
+        total_files = sum(1 for file in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, file)))
+
+        # Iterate through all files in the folder with tqdm for the progress bar
+        for filename in tqdm(os.listdir(folder_path), total=total_files, desc="Processing files"):
+            # Check if the current item is a file
+            if os.path.isfile(os.path.join(folder_path, filename)):
+                # Remove the file extension (.json) and add to the list
+                filenames_without_extension.append(os.path.splitext(filename)[0])
+
+        # Create a dictionary with the list of filenames
+        data = {"data": filenames_without_extension}
+
+        # Save the dictionary as a JSON file
+        with open(output_file_path, 'w') as output_file:
+            json.dump(data, output_file, indent=2)
+
+        print(f"File names without extensions saved to {output_file_path}")
+    else:
+        print(f"The folder path '{folder_path}' does not exist.")
+
+
+filenames = fr"{folder}\_crude\filenames.json"
+step9(postfolderscontainer_path, filenames)
+print('\033[91m' + 'STEP 9 done' + '\033[0m')
+print('\033[91m' + '-' * 100 + '\033[0m')
+
+"""
+------------------------------------------------------------------------------------------------------------------------
+STEP 10:
+------------------------------------------------------------------------------------------------------------------------
+"""
+
+
+def step10(collection, filenames_path, folder_path):
+    with open(filenames_path, 'r') as f:
+        data = json.load(f)
+    filenames = data['data']
+
+    def parseSubmission(submission):
+        if len(submission) != 0:
+            new_submission = {
+                'title': submission.get('title', 'key does not exist'),
+                'author': submission.get('author', 'key does not exist'),
+                'created_utc': submission.get('created_utc', 'key does not exist'),
+                'text': submission.get('selftext', 'key does not exist'),
+                'ups': submission.get('ups', 'key does not exist'),
+                'downs': submission.get('downs', 'key does not exist'),
+                'score': submission.get('score', 'key does not exist'),
+                'num_comments': submission.get('num_comments', 'key does not exist'),
+                'id': submission.get('id', 'key does not exist'),
+                'other_data': {}
+            }
+
+            # Include all keys and values from submission that were not taken previously
+            for key, value in submission.items():
+                if key not in new_submission:
+                    new_submission['other_data'][key] = value
+
+            return new_submission
+
+    def parseComment(comment):
+        new_comment = {
+            'author': comment.get('author', 'key does not exist'),
+            'ups': comment.get('ups', 'key does not exist'),
+            'downs': comment.get('downs', 'key does not exist'),
+            'created_utc': comment.get('created_utc', 'key does not exist'),
+            'body': comment.get('body', 'key does not exist'),
+            'score': comment.get('score', 'key does not exist'),
+            'other_data': {}
+        }
+
+        # Include all keys and values from comment that were not taken previously
+        for key, value in comment.items():
+            if key not in new_comment:
+                new_comment['other_data'][key] = value
+
+        return new_comment
+
+    for filename in tqdm(filenames, desc="Processing Files"):
+        new_filename = fr'{folder_path}\{filename}.json'
+        with open(new_filename, 'r') as f:
+            data = json.load(f)
+            if type(data) == dict:
+                submission = data['submission']
+                parsedSubmission = parseSubmission(submission)
+
+                parsedComments = []
+                comments = data['comments']
+                if len(comments) != 0:
+                    for comment in comments:
+                        if len(comment) != 0 and isinstance(comment, dict):
+                            parsedComment = parseComment(comment)
+                            parsedComments.append(parsedComment)
+                parsedSubmission['parsedComments'] = parsedComments
+
+                collection.insert_one(parsedSubmission)
+            else:
+                pass
+
+
+step10(collection, filenames, postfolderscontainer_path)
+print('\033[91m' + 'STEP 10 done' + '\033[0m')
+print('\033[91m' + '-' * 100 + '\033[0m')
+
+end_time = time.time()
+elapsed_seconds = end_time - start_time
+
+elapsed_minutes = elapsed_seconds / 60
+elapsed_hours = elapsed_minutes / 60
+
+if elapsed_minutes < 1:
+    print(f"Elapsed time: {elapsed_seconds:.2f} seconds")
+elif elapsed_hours < 1:
+    print(f"Elapsed time: {elapsed_minutes:.2f} minutes {elapsed_seconds - (elapsed_minutes * 60):.2f} seconds")
+else:
+    print(f"Elapsed time: {elapsed_hours:.2f} hours {elapsed_minutes - (elapsed_hours * 60):.2f} minutes {elapsed_seconds - (elapsed_minutes * 60):.2f} seconds")

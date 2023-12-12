@@ -1,0 +1,42 @@
+import json
+from tqdm import tqdm
+import os
+
+container_folder = r"C:\Users\HP\Desktop\datasets-cleaned\_crude"
+
+comments_folder = r"C:\Users\HP\Desktop\datasets-cleaned\comments"
+submissions_folder = r"C:\Users\HP\Desktop\datasets-cleaned\submissions"
+
+comments_container = r"C:\Users\HP\Desktop\datasets-cleaned\_crude\comments"
+submissions_container = r"C:\Users\HP\Desktop\datasets-cleaned\_crude\submissions"
+
+
+def split(folder, container):
+    a = 1
+    total_a = len(os.listdir(folder))  # Total number of iterations for the outer loop
+    # Outer loop progress bar
+    with tqdm(total=total_a, desc="Processing") as outer_pbar:
+        while a <= total_a:
+            index = str(a).zfill(3)
+            path = folder + "\\" + index + ".json"
+
+            with open(path, "r") as f:
+                content = json.load(f)
+
+            b = 0
+            total = len(content)
+
+            while b < total - 1:
+                container_path = container + "\\" + index + "_" + str(b) + ".json"
+                with open(container_path, "w") as f:
+                    json.dump(content[b], f)
+                b += 1
+
+            a += 1
+            outer_pbar.update(1)
+
+    print("Done")
+
+
+split(comments_folder, comments_container)
+split(submissions_folder, submissions_container)

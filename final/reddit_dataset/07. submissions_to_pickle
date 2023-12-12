@@ -1,0 +1,19 @@
+import json
+import pickle
+import os
+
+folder = r"C:\Users\HP\Desktop\datasets-cleaned\_crude\submissions"
+save_path = r"C:\Users\HP\Desktop\datasets-cleaned\_crude\submissions-indexed.pickle"
+
+total = []
+filenames = os.listdir(folder)
+for filename in filenames:
+    with open(os.path.join(folder, filename), "r") as f:
+        filename = os.path.splitext(os.path.basename(filename))[0]
+        a, b = filename.split('_')
+        data = json.load(f)
+        _id = data['id']
+        total.append([a, b, _id])
+
+with open(save_path, "wb") as f:
+    pickle.dump(total, f)

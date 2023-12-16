@@ -1,1 +1,128 @@
+import praw
+import passwords
+from pymongo import MongoClient
+
+db_name = input("Database: ")
+collection_name = input("Collection: ")
+subreddit_name = input("Subreddit: ")
+num_of_posts = int(input("Number of last posts: "))
+
+# connect to mongodb
+client = MongoClient('localhost', 27017)
+db = client[db_name]
+collection = db[collection_name]
+
+client_id = passwords.client_id
+client_secret = passwords.client_secret
+user_agent = passwords.user_agent
+username = passwords.username
+password = passwords.password
+
+# Initialize the Reddit API client
+reddit = praw.Reddit(
+    client_id=client_id,
+    client_secret=client_secret,
+    user_agent=user_agent,
+    username=username,
+    password=password
+)
+
+
+def get_submission_ids(reddit, subreddit='AskDocs', count=10):
+
+    # Specify the subreddit you want to scrape
+    subreddit_name = subreddit
+
+    # Limit the number of posts to retrieve (up to 1000)
+    post_limit = count
+
+    # Retrieve the latest posts from the subreddit
+    subreddit = reddit.subreddit(subreddit_name)
+
+    ids = []
+    for submission in subreddit.new(limit=post_limit):
+        ids.append(submission.id)
+
+    return ids
+
+
+def parse_comments(submission):
+    def is_valid_comment(comment):
+        return isinstance(comment, praw.models.Comment) or isinstance(comment, praw.models.MoreComments)
+
+    def parse_comment(comment):
+        if is_valid_comment(comment):
+            keys = set(vars(comment).keys())
+            comment_data = {
+                'comment_id': comment.id,
+                'user': comment.author.name if comment.author else None,
+                'commented_at': comment.created_utc,
+                'votes': comment.score,
+                'text': comment.body,
+                'replies': [],
+                'other_data': {key: getattr(comment, key) for key in keys - {'comment_id', 'user', 'commented_at',
+                                                                             'votes', 'text', 'replies'}}
+            }
+            if isinstance(comment, praw.models.Comment):
+                for reply in comment.replies:
+                    reply_data = parse_comment(reply)
+                    if reply_data:
+                        comment_data['replies'].append(reply_data)
+            return comment_data
+        else:
+            return None
+
+    submission.comments.replace_more(limit=None)
+    comments = []
+    for comment in submission.comments._comments:
+        comment_data = parse_comment(comment)
+        if comment_data:
+            comments.append(comment_data)
+    return comments
+
+
+def parse_submission(reddit, id='18fsgcq'):
+    submission = reddit.submission(id)
+    submission_keys = set(vars(submission).keys())
+    main_keys = {'title', 'author', 'created_utc', 'selftext', 'ups', 'downs', 'score'}
+    level_1_keys = {'author_flair_text', 'author_fullname', 'name', 'over_18', 'permalink', 'pinned', 'upvote_ratio', 'view_count', 'visited'}
+    level_2_keys = submission_keys - main_keys - level_1_keys
+
+    new_dict = {
+        'title': submission.title,
+        'author': submission.author,
+        'created_utc': submission.created_utc,
+        'text': submission.selftext,
+        'ups': submission.ups,
+        'downs': submission.downs,
+        'score': submission.score,
+        'other_data': {
+            'LEVEL_1': {key: getattr(submission, key) for key in level_1_keys},
+            'LEVEL_2': {key: getattr(submission, key) for key in level_2_keys}},
+        'comments': parse_comments(submission)}
+    return new_dict
+
+
+def clean_dict(d):
+    if isinstance(d, dict):
+        for key in list(d.keys()):
+            if hasattr(d[key], '__dict__'):
+                del d[key]
+            else:
+                clean_dict(d[key])
+    elif isinstance(d, list):
+        for item in d:
+            clean_dict(item)
+
+
+submission_ids = get_submission_ids(reddit, subreddit=subreddit_name, count=num_of_posts)
+count = 1
+
+print("\033[94m" + "-" * 50 + "\033[0m")
+for submission_id in submission_ids:
+    print(f'Submission \033[92m{count}\033[0m/\033[92m{num_of_posts}\033[0m: {submission_id}')
+    count += 1
+    submission = parse_submission(reddit, submission_id)
+    clean_dict(submission)
+    collection.insert_one(submission)
 

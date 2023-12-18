@@ -32,3 +32,11 @@ Downloading raw and processed contents of open access articles in PubMed Central
 
 However, not all articles given by Unpaywall are found within PMC dataset. Yet again, only around 1/3 of pdfs are downloaded, however, downloading is fast and convenient unlike in *unpaywall-articles*. If querying for articles was made within PMC and not Unpaywall, results may be better.<br>
 Another advantage of this way over *unpaywall-articles* is the fact that pdf can be downloaded both raw and partially processed (i.e. images separated as picture files). Moreover, dataset also provides some articles in XML format, though their downloading is not included in this code.<br>
+## other_samples
+Contains unfinished, yet working pieces of code:<br>
+### quora
+Script for scraping Quora (doesn't have an API).
+1. Given the query, the browser is loaded in headless mode using Selenium.
+2. Results in the page are loaded dynamically, so scrolling is done every with delays (interval length randomized within limits specified).
+3. After the specified number of scrolls, the results (urls) are saved in a json file.
+The htmls are scraped using regex, thus contain various meaningless urls (that do not link to posts). This could be avoided by parsing the html content non-textually or parsing it as it is, but cleaning afterwards.

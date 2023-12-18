@@ -1,0 +1,76 @@
+from selenium import webdriver      # for opening webpage
+from PIL import Image, ImageGrab    # for taking screenshots and handling images
+import pyautogui                    # for moving mouse and clicking
+import random                       # for generating random number in file name uniquification
+import time                         # for delays
+import os                           # for deleting screenshots
+import string
+from selenium.common.exceptions import TimeoutException
+
+
+def manual_downloading(driver, folder_path, url,
+                       initial_delay=1, mouse_movement_duration=0.5, click_wait=0.2):
+    random_string = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+    filename = f"{random_string}.pdf"
+
+    print(url)
+    try:
+        driver.get(url)
+
+        time.sleep(initial_delay)
+
+        # Screenshot screen place where download button is supposed to be
+        x1, y1, x2, y2 = 1770, 175, 1785, 195
+        screenshot = ImageGrab.grab(bbox=(x1, y1, x2, y2))
+        screenshot.save("screenshot.jpg")
+
+        # Compare pixel values screenshot and saved download button
+        download_button = Image.open("download_button.jpg")
+        screenshot = Image.open("screenshot.jpg")
+        screenshot = list(screenshot.getdata())
+        download_button = list(download_button.getdata())
+        blue_message = list(Image.open("blue.jpg").getdata())
+
+        if screenshot == blue_message:
+            pyautogui.moveTo(1768, 148, duration=mouse_movement_duration)
+            pyautogui.click()
+            pyautogui.moveTo(500, 0, duration=mouse_movement_duration/2)
+            time.sleep(click_wait)
+        # If download button is there, continue normally
+        if screenshot == download_button:
+
+            # Move to download button and click it
+            pyautogui.moveTo(1778, 174, duration=mouse_movement_duration)
+            pyautogui.click()
+            time.sleep(click_wait)
+
+            # Move to location field and replace Desktop location with folder_path
+            pyautogui.moveTo(362, 70, duration=mouse_movement_duration)
+            pyautogui.doubleClick()
+            pyautogui.hotkey('ctrl', 'a')
+            pyautogui.press('delete')
+            pyautogui.write(folder_path)
+            pyautogui.press('enter')
+
+            # Move to file name field and replace it with filename
+            pyautogui.moveTo(362, 892, duration=mouse_movement_duration)
+            pyautogui.doubleClick()
+            pyautogui.hotkey('ctrl', 'a')
+            pyautogui.press('delete')
+            pyautogui.write(filename)
+            pyautogui.press('enter')
+
+            # Move to save button and click it
+            pyautogui.moveTo(1714, 976, duration=mouse_movement_duration)
+            pyautogui.click()
+            time.sleep(click_wait)
+            os.remove("screenshot.jpg")
+
+            pyautogui.moveTo(500, 0, duration=mouse_movement_duration/2)
+            pyautogui.click()
+            return [url, os.path.join(folder_path, filename)]
+        else:
+            os.remove("screenshot.jpg")
+            return [url, None]
+    except TimeoutException:
+        return [url, 'timeout']

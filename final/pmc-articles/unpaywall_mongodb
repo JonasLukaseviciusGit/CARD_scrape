@@ -1,0 +1,50 @@
+import requests
+from pymongo import MongoClient
+import passwords
+import time
+
+client = MongoClient('localhost', 27017)
+db = client['Articles1']
+
+email = passwords.email
+
+
+def get_unpaywall_data(query, email, is_open_access=True):
+    collection_name = query.replace(' ', '_')
+    collection = db[collection_name]
+
+    elements = 0
+    page = 1
+    while True:
+        url = f"https://api.unpaywall.org/v2/search?query={query}&is_oa={is_open_access}&page={page}&email={email}"
+        result = requests.get(url).json()['results']
+        num_elements = len(result)
+        if num_elements == 0:
+            break
+        for article in result:
+            record = collection.insert_one(article)
+        elements += num_elements
+        time.sleep(1)
+        print(f'Page {page}; Inserted {num_elements} elements.')
+        page += 1
+    print('\033[91m' + '-' * 50 + '\033[0m')
+    print(f'Inserted {elements} elements to {collection_name} collection.')
+
+queries = [
+    'pain management',
+    'chronic pain treatment',
+    'pain relief strategies',
+    'pain control techniques',
+    'interventional pain management',
+    'pain assessment',
+    'physical therapy for pain',
+    'psychological approaches to pain management',
+    'cancer pain management',
+    'pediatric pain management',
+    'pain management guidelines'
+]
+
+for query in queries:
+    print(f'Query: {query}')
+    get_unpaywall_data(query, email, is_open_access=True)
+    print('\033[91m' + '-' * 50 + '\033[0m')

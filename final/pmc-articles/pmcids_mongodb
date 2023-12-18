@@ -1,0 +1,46 @@
+import requests
+from pymongo import MongoClient
+import passwords
+
+email = passwords.email
+
+client = MongoClient('localhost', 27017)
+db = client['Articles1']
+
+collections = db.list_collection_names()
+print(collections)
+
+
+def add_pmcid(collection):
+    print(collection)
+
+    records = db[collection].find({})
+
+    data = []
+    dois = []
+    for record in records:
+        dois.append(record['response']['doi'])
+        data.append([record['_id'], record['response']['doi']])
+
+    sublists = [dois[i:i + 200] for i in range(0, len(dois), 200)]
+
+    new_data = []
+    for sublist in sublists:
+        dois_joined = ','.join(sublist)
+        url = f'https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/?email={email}&ids={dois_joined}&format=json'
+        response = requests.get(url).json()['records']
+        for article in response:
+            if 'pmcid' in article:
+                new_data.append([article['doi'], article['pmcid']])
+            else:
+                new_data.append([article['doi'], None])
+
+    for element in new_data:
+        doi = element[0]
+        pmcid = element[1]
+        db[collection].update_one({"response.doi": doi}, {"$set": {"pmcid": pmcid}})
+
+
+for collection in collections:
+    add_pmcid(collection)
+    print('\033[91m' + '-' * 50 + '\033[0m')

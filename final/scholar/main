@@ -1,7 +1,7 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service as ChromeService
 from fake_useragent import UserAgent
 import json
 import time
@@ -53,26 +53,26 @@ def get_google_scholar_urls(query, file_path, num_pages=1,
         print('\033[1m\033[91m' + '-' * 100 + '\033[0m')
 
         # ---------------------------------------- #
-        url_elements = driver.find_elements(By.XPATH, "//h3[@class='gs_rt']//a")
-        for result in url_elements:
-            urls.append(result.get_attribute('href'))
+        result_elements = driver.find_elements(By.XPATH, "//div[@class='gs_ri']")
+        for result_element in result_elements:
+            # Extracting URLs, titles, and authors
+            url_element = result_element.find_element(By.XPATH, ".//h3[@class='gs_rt']//a")
+            urls.append(url_element.get_attribute('href'))
 
-        title_elements = driver.find_elements(By.XPATH, "//h3[@class='gs_rt']//a")
-        for result in title_elements:
-            titles.append(result.text)
+            title_element = result_element.find_element(By.XPATH, ".//h3[@class='gs_rt']//a")
+            titles.append(title_element.text)
 
-        author_elements = driver.find_elements(By.XPATH, "//div[@class='gs_ri']//div[@class='gs_a']")
-        for author_element in author_elements:
+            author_element = result_element.find_element(By.XPATH, ".//div[@class='gs_ri']//div[@class='gs_a']")
             authors.append(author_element.text.split(' - ')[0].strip())
+
+            # Extracting PDF link if available
+            pdf_link_element = result_element.find_element(By.XPATH, ".//div[@class='gs_or_ggsm']//a[contains(@href, '.pdf')]")
+            pdf_link = pdf_link_element.get_attribute('href') if pdf_link_element else None
+
+            total.append({'url': url_element.get_attribute('href'), 'title': title_element.text, 'author': author_element.text.split(' - ')[0].strip(), 'pdf_link': pdf_link})
         # ---------------------------------------- #
 
         # Save URLs after processing each page
-        total = []
-        index = 0
-        for url in urls:
-            total.append({'url': url, 'title': titles[index], 'author': authors[index]})
-            index += 1
-
         save_urls_to_json(total, page + 1, file_path)  # Page numbers start from 1
 
         sleeptime = random.uniform(minsleep, maxsleep)
@@ -90,7 +90,6 @@ def save_urls_to_json(urls, page_number, file_path):
         json_file.write('\n')
 
 
-
 # Execute
 start_time = time.time()
 
@@ -98,13 +97,12 @@ query = input('Enter query: ')
 num_pages = int(input('Enter number of pages: '))
 maxsleep = int(input('Enter max sleep: '))
 
-minsleep = int(maxsleep/2)
+minsleep = int(maxsleep / 2)
 maxscroll = int(minsleep)
-minscroll = int(maxscroll/2)
+minscroll = int(maxscroll / 2)
 
 print(f'maxsleep: {maxsleep}, minsleep: {minsleep}, maxscroll: {maxscroll}, minscroll: {minscroll}')
 
-#file_path = fr'C:\Users\HP\Desktop\CARD\google_scholar\{query}.json'
 file_path = fr'C:\Users\HP\Desktop\12-17\{query}.json'
 result_urls = get_google_scholar_urls(query, file_path, num_pages,
                                       minscroll=minscroll, maxscroll=maxscroll,
@@ -116,5 +114,5 @@ num_of_results = len(result_urls)
 time_passed = time.time() - start_time
 print(f"Saved {num_of_results} Google Scholar URLs.")
 print(f'\033[1m{"completed in: ":<15}\033[0m {time_passed:>15.2f} seconds')
-print(f'\033[1m{"average: ":<15}\033[0m {time_passed/num_pages:>15.2f} seconds / page')
+print(f'\033[1m{"average: ":<15}\033[0m {time_passed / num_pages:>15.2f} seconds / page')
 print(f'{datetime.now().strftime("%H:%M:%S"):>15}')

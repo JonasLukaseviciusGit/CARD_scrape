@@ -10,6 +10,7 @@ The link provided contains datasets regarding top 20 000 subreddits and their co
 The main problems solved are:
 * the submission-comment unconnectedness (submissions and comments are stored as separate datasets)
 * the need to prepare datasets for convenient querying (organizing them to MongoDB to eliminate the need to load them on RAM every time)<br>
+
 However, the datasets still need to be loaded onto RAM for processing, thus it is crucial to make sure none of the dataset is bigger than RAM space available.<br>
 This problem could be solved with slight modifications.<br>
 Data is stored in MongoDB database, but file system is used during intermediate steps.<br>

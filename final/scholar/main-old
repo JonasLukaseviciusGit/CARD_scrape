@@ -7,11 +7,6 @@ import json
 import time
 from datetime import datetime
 import random
-from pymongo import MongoClient
-
-client = MongoClient('localhost', 27017)
-db = client['google_scholar']
-collection = db['articles']
 
 
 def get_random_user_agent():
@@ -19,7 +14,7 @@ def get_random_user_agent():
     return ua.random
 
 
-def get_google_scholar_urls(query, y_start, y_end, num_pages=1,
+def get_google_scholar_urls(query, file_path, num_pages=1,
                             minscroll=2, maxscroll=5,
                             minsleep=5, maxsleep=10):
     query = query.replace(' ', '+')
@@ -42,16 +37,13 @@ def get_google_scholar_urls(query, y_start, y_end, num_pages=1,
 
     print(f'\033[1m{"starting scraping:":<20}\033[0m {datetime.now().strftime("%H:%M:%S"):>15}')
     count = 0
-    num_of_results = 0
-    print(num_pages)
     for page in range(num_pages):
         urls = []  # Reset the list for each page
         titles = []
         authors = []
-        pdfs = []
 
-        url = f"https://scholar.google.com/scholar?start={count}&q={query}&hl=en&as_ylo={y_start}&as_yhi={y_end}"
-        print(f'\033[1m\033[92m{"getting page   "}\033[0m {page+1}{":"}{datetime.now().strftime("%H:%M:%S"):>18}')
+        url = f"https://scholar.google.com/scholar?start={count}&q={query}&hl=lt&as_sdt=2007"
+        print(f'\033[1m\033[92m{"getting page   "}\033[0m {count + 1}{":"}{datetime.now().strftime("%H:%M:%S"):>18}')
         print(f'  {url}')
         driver.get(url)
 
@@ -61,37 +53,17 @@ def get_google_scholar_urls(query, y_start, y_end, num_pages=1,
         print('\033[1m\033[91m' + '-' * 100 + '\033[0m')
 
         # ---------------------------------------- #
-        # ---------------------------------------- #
-        # ---------------------------------------- #
-        html_elements = driver.find_elements(By.XPATH, "//div[contains(@class, 'gs_r gs_or gs_scl')]")
-        if len(html_elements) == 0:
-            print('End of search')
-            break
+        url_elements = driver.find_elements(By.XPATH, "//h3[@class='gs_rt']//a")
+        for result in url_elements:
+            urls.append(result.get_attribute('href'))
 
-        for element in html_elements:
+        title_elements = driver.find_elements(By.XPATH, "//h3[@class='gs_rt']//a")
+        for result in title_elements:
+            titles.append(result.text)
 
-            title_element = element.find_element(By.XPATH, ".//h3[@class='gs_rt']")
-            if title_element:
-                title_element = title_element.text
-                print(title_element)
-            else:
-                print(None)
-
-            author_element = element.find_element(By.XPATH, ".//div[@class='gs_a']")
-            print(author_element.text)
-
-            try:
-                link_element = element.find_element(By.XPATH, ".//div[@class='gs_or_ggsm']//a")
-                link_text = link_element.get_attribute('href')
-                _dictionary = {'title': title_element, 'author': author_element.text, 'link': link_text}
-                collection.insert_one(_dictionary)
-                num_of_results += 1
-            except:
-                print(None)
-
-            print('-' * 100)
-        # ---------------------------------------- #
-        # ---------------------------------------- #
+        author_elements = driver.find_elements(By.XPATH, "//div[@class='gs_ri']//div[@class='gs_a']")
+        for author_element in author_elements:
+            authors.append(author_element.text.split(' - ')[0].strip())
         # ---------------------------------------- #
 
         # Save URLs after processing each page
@@ -109,7 +81,7 @@ def get_google_scholar_urls(query, y_start, y_end, num_pages=1,
         count += 10
 
     driver.quit()
-    return num_of_results
+    return urls
 
 
 def save_urls_to_json(urls, page_number, file_path):
@@ -123,17 +95,8 @@ def save_urls_to_json(urls, page_number, file_path):
 start_time = time.time()
 
 query = input('Enter query: ')
-
-num_pages = int(input('Enter number of pages (0 if all): '))
-if num_pages == 0:
-    num_pages = 1000
-
+num_pages = int(input('Enter number of pages: '))
 maxsleep = int(input('Enter max sleep: '))
-
-y_start = int(input('Enter start year (0 if no): '))
-y_end = int(input('Enter end year (0 if no): '))
-if y_end == 0:
-    y_end = 10000
 
 minsleep = int(maxsleep/2)
 maxscroll = int(minsleep)
@@ -141,13 +104,15 @@ minscroll = int(maxscroll/2)
 
 print(f'maxsleep: {maxsleep}, minsleep: {minsleep}, maxscroll: {maxscroll}, minscroll: {minscroll}')
 
+#file_path = fr'C:\Users\HP\Desktop\CARD\google_scholar\{query}.json'
 file_path = fr'C:\Users\HP\Desktop\12-17\{query}.json'
-num_of_results = get_google_scholar_urls(query, y_start, y_end, num_pages,
-                                         minscroll=minscroll, maxscroll=maxscroll,
-                                         minsleep=minsleep, maxsleep=maxsleep)
+result_urls = get_google_scholar_urls(query, file_path, num_pages,
+                                      minscroll=minscroll, maxscroll=maxscroll,
+                                      minsleep=minsleep, maxsleep=maxsleep)
 
 print('')
 print('----------------------------------------')
+num_of_results = len(result_urls)
 time_passed = time.time() - start_time
 print(f"Saved {num_of_results} Google Scholar URLs.")
 print(f'\033[1m{"completed in: ":<15}\033[0m {time_passed:>15.2f} seconds')

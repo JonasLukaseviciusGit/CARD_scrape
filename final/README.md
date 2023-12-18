@@ -28,6 +28,6 @@ This way, only 1/3 of the pdfs on average are downloaded successfully, however, 
 ## pmc-articles
 Downloading raw and processed contents of open access articles in PubMed Central's PMC Open Access Subset.<br>
 1. Retrieves all available articles' metadata from Unpaywall and stores them in MongoDB.
-2. Then, iterates through every record (representing article) in MongoDB and downloads the article from PMC database by DOI.<br>
+2. Then, iterates through every record (representing article) in MongoDB and downloads the article from PMC database by DOI.
 However, not all articles given by Unpaywall are found within PMC dataset. Yet again, only around 1/3 of pdfs are downloaded, however, downloading is fast and convenient unlike in *unpaywall-articles*. If querying for articles was made within PMC and not Unpaywall, results may be better.<br>
 Another advantage of this way over *unpaywall-articles* is the fact that pdf can be downloaded both raw and partially processed (i.e. images separated as picture files). Moreover, dataset also provides some articles in XML format, though their downloading is not included in this code.<br>

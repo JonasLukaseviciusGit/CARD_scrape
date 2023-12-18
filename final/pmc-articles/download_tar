@@ -1,0 +1,29 @@
+import tarfile
+from ftplib import FTP
+import random
+import string
+import os
+
+url = "ftp.ncbi.nlm.nih.gov"
+
+ftp = FTP(url)
+ftp.login()
+
+
+def download_tar(ftp, folder_path, urlpath):
+    random_string = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+    save_path = os.path.join(folder_path, random_string + ".tar.gz")
+    extracted_folder = os.path.join(folder_path, random_string)
+
+    with open(save_path, 'wb') as fp:
+        ftp.retrbinary(f'RETR {urlpath}', fp.write)
+
+    with tarfile.open(save_path, 'r:gz') as tar:
+        if os.path.exists(extracted_folder):
+            os.rmdir(extracted_folder)
+
+        tar.extractall(path=folder_path)
+
+    os.remove(save_path)
+
+    return extracted_folder

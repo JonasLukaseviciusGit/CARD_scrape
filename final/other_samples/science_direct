@@ -1,0 +1,25 @@
+import requests
+import xml.etree.ElementTree as ET
+import passwords
+
+PII = "S0885392402004116"
+
+
+def get_xml_content(url):
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.content
+    else:
+        print(f"Error: Unable to fetch content. Status code: {response.status_code}")
+        return None
+
+
+api_url = f"https://api.elsevier.com/content/article/pii/{PII}?APIKey={passwords.sciencedirect_API}"
+xml_content = get_xml_content(api_url)
+
+root = ET.fromstring(xml_content)
+namespace = {'dc': 'http://purl.org/dc/elements/1.1/'}
+
+title = root.find('.//dc:title', namespaces=namespace)
+abstract = root.find('.//dc:description', namespaces=namespace).text
+print(abstract)

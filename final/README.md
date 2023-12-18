@@ -1,5 +1,5 @@
 ## reddit_scraper
-Uses Reddit API (praw) to scrape data of past 1000 posts in a particular subreddit (as far ago as API allows).
+Uses Reddit API (praw) to scrape data of past 1000 posts in a particular subreddit (as far ago as API allows)./n
 API has a limited free tier. For high scale data mining, paid tier or alternative approaches should be considered.
 Stores scraped data in a MongoDB database.
 Requires password.py, containing authentication keys.

@@ -102,7 +102,7 @@ comments_folder = fr"{folder}\datasets-cleaned\comments"
 
 """
 ------------------------------------------------------------------------------------------------------------------------
-STEP 2: Splitting datasets-cleaned into smaller files of 10000 elements each
+STEP 2: Splitting datasets-cleaned into smaller files of 10000 elements each 
 ------------------------------------------------------------------------------------------------------------------------
 """
 
